@@ -16,6 +16,10 @@ export class Rectangle {
   private dragTR = false;
   private dragBL = false;
   private dragBR = false;
+  private leftSide = false;
+  private rightSide = false;
+  private topSide = false;
+  private bottomSide = false;
   private dragWholeRect = false;
   private mouseX = 0;
   private mouseY = 0;
@@ -97,18 +101,14 @@ export class Rectangle {
   }
   mouseUp() {
     this.dragTL = this.dragTR = this.dragBL = this.dragBR = false;
+    this.leftSide = this.rightSide = this.bottomSide = this.topSide = false;
     this.dragWholeRect = false;
   }
   mouseDown(e: MouseEvent) {
     const pos = this.getMousePos(e);
     this.mouseX = pos.x;
     this.mouseY = pos.y;
-
-    if (this.checkInRect(this.mouseX, this.mouseY)) {
-      this.dragWholeRect = true;
-      this.startX = this.mouseX;
-      this.startY = this.mouseY;
-    } else if (
+if (
       this.checkCloseEnough(this.mouseX, this.left) &&
       this.checkCloseEnough(this.mouseY, this.top)
     ) {
@@ -128,6 +128,32 @@ export class Rectangle {
       this.checkCloseEnough(this.mouseY, this.top + this.height)
     ) {
       this.dragBR = true;
+    }else if (this.mouseY >= this.top &&
+             this.mouseY <= this.top + this.height &&
+             this.mouseX >= this.left  - Rectangle.LINE_WIDTH &&
+             this.mouseX <= this.left + Rectangle.LINE_WIDTH){
+             this.leftSide = true;
+        }
+      else if (this.mouseY >= this.top &&
+              this.mouseY <= this.top + this.height &&
+              this.mouseX >= this.left + this.width  - Rectangle.LINE_WIDTH &&
+              this.mouseX <= this.left + this.width + Rectangle.LINE_WIDTH){
+              this.rightSide = true;
+      }else if (this.mouseY >= this.top - Rectangle.LINE_WIDTH &&
+        this.mouseY <= this.top + Rectangle.LINE_WIDTH &&
+        this.mouseX >= this.left &&
+        this.mouseX <= this.left + this.width) {
+          this.topSide = true;
+        }else if (this.mouseY >= this.top + this.height  - Rectangle.LINE_WIDTH &&
+          this.mouseY <= this.top + this.height + Rectangle.LINE_WIDTH &&
+          this.mouseX >= this.left &&
+          this.mouseX <= this.left + this.width){
+            this.bottomSide = true;
+        }
+    else if (this.checkInRect(this.mouseX, this.mouseY)) {
+      this.dragWholeRect = true;
+      this.startX = this.mouseX;
+      this.startY = this.mouseY;
     }
 
     this.drawRectInCanvas();
@@ -137,51 +163,63 @@ export class Rectangle {
     const pos = this.getMousePos(e);
     this.mouseX = pos.x;
     this.mouseY = pos.y;
-    console.log("move")
-    // Vérifier si la souris est à l'intérieur des cercles du coin
+    //console.log("move");
     if (
-      (this.checkCloseEnough(this.mouseX, this.left) && this.checkCloseEnough(this.mouseY, this.top)) ||
-      (this.checkCloseEnough(this.mouseX, this.left + this.width) && this.checkCloseEnough(this.mouseY, this.top + this.height))
+      (this.checkCloseEnough(this.mouseX, this.left) &&
+        this.checkCloseEnough(this.mouseY, this.top)) ||
+      (this.checkCloseEnough(this.mouseX, this.left + this.width) &&
+        this.checkCloseEnough(this.mouseY, this.top + this.height))
     ) {
-      this.canvas.style.cursor = 'nwse-resize'; // Changer le curseur en 'nwse-resize' si la souris est à l'intérieur des cercles du coin
-    } else if (
-      (this.checkCloseEnough(this.mouseX, this.left + this.width) && this.checkCloseEnough(this.mouseY, this.top)) ||
-      (this.checkCloseEnough(this.mouseX, this.left) && this.checkCloseEnough(this.mouseY, this.top + this.height))
+      this.canvas.style.cursor = "nwse-resize"; 
+       } else if (
+      (this.checkCloseEnough(this.mouseX, this.left + this.width) &&
+        this.checkCloseEnough(this.mouseY, this.top)) ||
+      (this.checkCloseEnough(this.mouseX, this.left) &&
+        this.checkCloseEnough(this.mouseY, this.top + this.height))
     ) {
-      this.canvas.style.cursor = 'nesw-resize'; // Changer le curseur en 'nesw-resize' si la souris est à l'intérieur des cercles du coin opposé
-    }else if (
-      (this.mouseY >= this.top && this.mouseY <= this.top + this.height &&
-      this.mouseX >= this.left && this.mouseX <= this.left+Rectangle.LINE_WIDTH) ||
-      (this.mouseY >= this.top  && this.mouseY <= this.top + this.height &&
-      this.mouseX >= this.left + this.width && this.mouseX <= this.left + this.width + Rectangle.LINE_WIDTH)  
-    ){
-      this.canvas.style.cursor = 'e-resize'; 
+      this.canvas.style.cursor = "nesw-resize"; 
+        } else if (
+      (this.mouseY >= this.top &&
+        this.mouseY <= this.top + this.height &&
+        this.mouseX >= this.left - Rectangle.LINE_WIDTH &&
+        this.mouseX <= this.left + Rectangle.LINE_WIDTH) ||
+      (this.mouseY >= this.top &&
+        this.mouseY <= this.top + this.height &&
+        this.mouseX >= this.left + this.width  - Rectangle.LINE_WIDTH &&
+        this.mouseX <= this.left + this.width + Rectangle.LINE_WIDTH)
+    ) {
+      this.canvas.style.cursor = "e-resize";
     } else if (
-      (this.mouseY >= this.top && this.mouseY <= this.top + Rectangle.LINE_WIDTH &&
-      this.mouseX >= this.left && this.mouseX <= this.left + this.width
-    )||(
-      (this.mouseY >= this.top + this.height && this.mouseY <= this.top + this.height+ Rectangle.LINE_WIDTH &&
-        this.mouseX >= this.left && this.mouseX <= this.left + this.width
-      )
-    )
-    ){
-      this.canvas.style.cursor = 's-resize'; 
+      (this.mouseY >= this.top  - Rectangle.LINE_WIDTH &&
+        this.mouseY <= this.top + Rectangle.LINE_WIDTH &&
+        this.mouseX >= this.left &&
+        this.mouseX <= this.left + this.width) ||
+      (this.mouseY >= this.top + this.height  - Rectangle.LINE_WIDTH &&
+        this.mouseY <= this.top + this.height + Rectangle.LINE_WIDTH &&
+        this.mouseX >= this.left &&
+        this.mouseX <= this.left + this.width)
+    ) {
+      this.canvas.style.cursor = "s-resize";
+    } else if (this.checkInRect(this.mouseX, this.mouseY)) {
+      this.canvas.style.cursor = "move"; 
+    } else {
+      this.canvas.style.cursor = "default";
     }
-      else if (this.checkInRect(this.mouseX, this.mouseY)) {
-      this.canvas.style.cursor = 'move'; // Changer le curseur en 'move'
-    }  
-    else {
-    this.canvas.style.cursor = 'default'; // Rétablir le curseur par défaut
-  }
     if (this.dragWholeRect) {
       e.preventDefault();
       e.stopPropagation();
       const dx = this.mouseX - this.startX;
       const dy = this.mouseY - this.startY;
-      if (this.left + dx > 0 && this.left + dx + this.width < this.canvas.width) {
+      if (
+        this.left + dx > 0 &&
+        this.left + dx + this.width < this.canvas.width
+      ) {
         this.left += dx;
       }
-      if (this.top + dy > 0 && this.top + dy + this.height < this.canvas.height) {
+      if (
+        this.top + dy > 0 &&
+        this.top + dy + this.height < this.canvas.height
+      ) {
         this.top += dy;
       }
       this.startX = this.mouseX;
@@ -219,19 +257,48 @@ export class Rectangle {
         this.height = newHeight;
       }
     }
-  
+    else if (this.leftSide) {
+      const newWidth = this.left + this.width - this.mouseX;
+      if (newWidth > 150) {
+        this.width = newWidth;
+        this.left = this.mouseX;
+      }
+    }
+    else if (this.rightSide){
+      const newWidth = this.mouseX - this.left;
+      if (newWidth > 150) {
+        this.width = newWidth;
+      }
+    }else if (this.topSide){
+      const newHeight = this.top + this.height - this.mouseY;
+      if (newHeight > 150) {
+        this.height = newHeight;
+        this.top = this.mouseY;
+      }
+    }else if (this.bottomSide){
+      const newHeight = this.mouseY - this.top;
+      if (newHeight > 150) {
+        this.height= newHeight;
+      }
+    }
+
     this.drawRectInCanvas();
   }
   private getMousePos(e: MouseEvent) {
     const boundingRect = this.canvas.getBoundingClientRect();
     return {
       x: e.clientX - boundingRect.left,
-      y: e.clientY - boundingRect.top
+      y: e.clientY - boundingRect.top,
     };
   }
 
   private checkInRect(x: number, y: number) {
-    return x > this.left && x < this.left + this.width && y > this.top && y < this.top + this.height;
+    return (
+      x > this.left + Rectangle.LINE_WIDTH &&
+      x < this.left + this.width - Rectangle.LINE_WIDTH &&
+      y > this.top + Rectangle.LINE_WIDTH &&
+      y < this.top + this.height - Rectangle.LINE_WIDTH
+    );
   }
 
   private checkCloseEnough(p1: number, p2: number) {
@@ -239,22 +306,28 @@ export class Rectangle {
   }
 
   captureVideoInRectangle(video: HTMLVideoElement): HTMLCanvasElement {
-    const capturedCanvas = document.createElement('canvas');
+    const capturedCanvas = document.createElement("canvas");
     capturedCanvas.width = this.width;
     capturedCanvas.height = this.height;
-  
-    const ctx = capturedCanvas.getContext('2d');
+
+    const ctx = capturedCanvas.getContext("2d");
     if (!ctx) {
-      console.error('Canvas context is not supported');
+      console.error("Canvas context is not supported");
       return capturedCanvas;
     }
-  
-    // Dessine la partie du vidéo à l'intérieur du rectangle sur le canvas capturé
-    ctx.drawImage(video, this.left, this.top, this.width, this.height, 0, 0, this.width, this.height);
-  
+
+    ctx.drawImage(
+      video,
+      this.left,
+      this.top,
+      this.width,
+      this.height,
+      0,
+      0,
+      this.width,
+      this.height
+    );
+
     return capturedCanvas;
   }
-  
-
 }
-
