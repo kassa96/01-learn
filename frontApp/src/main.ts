@@ -20,7 +20,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
    <a class="bot-link hover:text-slate-300 p-2" href="#">Question</a>
  </nav>
 </div>
- <div class="w-full flex justify-center items-center">
+ <div class="w-full flex flex-col justify-center items-center">
  <div style="position:relative" class ="shadow-2xl rounded-md max-sm:w-full md:w-8/12 " >
  <video id="tuto" class="w-full object-cover"
  width="auto" height="auto" controls>
@@ -32,35 +32,42 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
          style="display:none; position:absolute;left: 0px;top: 0px;width: 100%;height: 100%;">
 </canvas>
  </div>
- <img class="hidden" id="capturedImage" src="" alt="Captured Image">
+ <img class="hidden border-2 border-green-800" id="capturedImage" src="" alt="Captured Image">
  </div>
 </main>
 `;
 
 let canvas: HTMLCanvasElement | null = null;
 let video = <HTMLVideoElement>document.getElementById("tuto");
-let watch_link = document.querySelector(".watch-link");
-let extract_link = document.querySelector(".extract-link");
-const captureButton = document.querySelector('.summarize-link') as HTMLElement;
+let watch_link = document.querySelectorAll(".watch-link");
+let extract_link = document.querySelectorAll(".extract-link");
+const captureButton = document.querySelectorAll('.summarize-link');
 let rectangle: Rectangle | null = null
 
 
 if (video !== null){
   video.addEventListener('loadeddata', () => {
       canvas = document.querySelector("#canvas")
-      captureButton!.addEventListener('click', captureAndDisplay);
+      captureButton.forEach((capture)=>{
+        capture!.addEventListener('click', captureAndDisplay);
+      })
       canvas!.addEventListener('mousedown', (e) => rectangle!.mouseDown(e));
       canvas!.addEventListener('mousemove', (e) => rectangle!.mouseMove(e));
       canvas!.addEventListener('mouseup', () => rectangle!.mouseUp());
-      watch_link?.addEventListener('click', ()=>{
-      canvas!.style.display = "none"
+      canvas!.addEventListener('mouseleave', () => rectangle!.mouseUp());
+      watch_link!.forEach((watch)=>{
+        watch.addEventListener('click', ()=>{
+          canvas!.style.display = "none"
+          })
       })
-      extract_link?.addEventListener('click', ()=>{
-        // Réinitialiser le canvas et le rectangle par défaut
-        canvas!.style.display = "block";
-        rectangle = new Rectangle(canvas!, video);
-        console.log("extract", rectangle)
-        rectangle.drawRectInCanvas(); // Dessiner le rectangle
+      extract_link.forEach((extract)=>{
+        extract.addEventListener('click', ()=>{
+          // Réinitialiser le canvas et le rectangle par défaut
+          canvas!.style.display = "block";
+          rectangle = new Rectangle(canvas!, video);
+          console.log("extract", rectangle)
+          rectangle.drawRectInCanvas(); // Dessiner le rectangle
+        })
       })
 });
 }
@@ -74,36 +81,25 @@ function repositionCanvas(){
 
 function captureAndDisplay(): void {
   if (rectangle != null && video != null) {
-    // Création d'un canvas temporaire pour capturer la région de la vidéo à l'intérieur du rectangle
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = video.videoWidth; // Utilisation de la largeur de la vidéo
-    tempCanvas.height = video.videoHeight; // Utilisation de la hauteur de la vidéo
+    const { width, height } = video.getBoundingClientRect();
+    tempCanvas.width = width 
+    tempCanvas.height = height;
     const tempCtx = tempCanvas.getContext('2d');
     if (tempCtx) {
-      // Capture de la région de la vidéo à l'intérieur du rectangle
-      tempCtx.drawImage(video, rectangle.left, rectangle.top, rectangle.width, rectangle.height, 0, 0, rectangle.width, rectangle.height);
-
-      // Affichage de l'image capturée dans la page
+      tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+      const imageData = tempCtx.getImageData(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
+      const cutCanvas = document.createElement('canvas');
+      const cutCtx = cutCanvas.getContext('2d');
+      cutCanvas.width = rectangle.width;
+      cutCanvas.height = rectangle.height;
+      cutCanvas.classList.remove("hidden");
+      cutCtx!.putImageData(imageData, 0, 0);
+      tempCtx.clip();
       const capturedImage = document.getElementById("capturedImage") as HTMLImageElement;
-      capturedImage.src = tempCanvas.toDataURL();
+      capturedImage.src = cutCanvas.toDataURL();
       capturedImage.classList.remove("hidden");
     }
   }
 }
-
-
-
-function captureAndDisplay1(): void {
-  console.log("ok")
-  const context = canvas!.getContext('2d');
-  canvas!.width = rectangle!.width;
-  canvas!.height = rectangle!.height;
-  context!.drawImage(video, rectangle!.left, rectangle!.top, rectangle!.width, rectangle!.height, 0, 0, rectangle!.width, rectangle!.height);
-  //context!.drawImage(video, rectangle!.left, rectangle!.top, rectangle!.width, rectangle!.height);
-  const image = new Image();
-  image.src = canvas!.toDataURL('image/png');
-  //canvas!.style.display = "none";
-  document.body.appendChild(image);
-}
-
 window.addEventListener("resize", repositionCanvas);

@@ -3,14 +3,12 @@ export class Rectangle {
   static readonly DEFAULT_HEIGHT = 200;
   static readonly RADIUS = 8;
   static readonly LINE_WIDTH = 3;
-  effective_image_width = 4032;
-  effective_image_height = 3024;
   top: number;
   left: number;
-  width: number;
-  height: number;
-  initialCanvasWidth: number;
-  initialCanvasHeight: number;
+   width: number;
+   height: number;
+  private  initialCanvasWidth: number;
+  private initialCanvasHeight: number;
   canvas: HTMLCanvasElement;
   private dragTL = false;
   private dragTR = false;
@@ -163,7 +161,6 @@ if (
     const pos = this.getMousePos(e);
     this.mouseX = pos.x;
     this.mouseY = pos.y;
-    //console.log("move");
     if (
       (this.checkCloseEnough(this.mouseX, this.left) &&
         this.checkCloseEnough(this.mouseY, this.top)) ||
@@ -303,31 +300,5 @@ if (
 
   private checkCloseEnough(p1: number, p2: number) {
     return Math.abs(p1 - p2) < Rectangle.RADIUS;
-  }
-
-  captureVideoInRectangle(video: HTMLVideoElement): HTMLCanvasElement {
-    const capturedCanvas = document.createElement("canvas");
-    capturedCanvas.width = this.width;
-    capturedCanvas.height = this.height;
-
-    const ctx = capturedCanvas.getContext("2d");
-    if (!ctx) {
-      console.error("Canvas context is not supported");
-      return capturedCanvas;
-    }
-
-    ctx.drawImage(
-      video,
-      this.left,
-      this.top,
-      this.width,
-      this.height,
-      0,
-      0,
-      this.width,
-      this.height
-    );
-
-    return capturedCanvas;
   }
 }
