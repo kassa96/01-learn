@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="flex min-h-screen flex-col items-center justify-center p-8 md:p-24 gap-4">
+    <div class="text-2xl md:text-5xl font-extrabold">
+    <span class="bg-clip-text py-10 text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+  Doing It By Watching Trying And Asking
+</span>
+</div>
+      <div class="w-full">
+      <input type="text" id="tutorial_url" placeholder="Past the link of a youtube video tutorial to try to practice"
+      class="w-full p-4 border-2 outline-none border-gray-300 rounded-3xl
+      focus:border-purple-500 focus:ring-2 focus:ring-purple-500"></input>
+      </div>
+      <div class="w-full mt-8">
+        <div class="bg-gray-200 h-4 rounded-md">
+          <div class=" bg-gradient-to-r from-pink-500 to-violet-500 h-full rounded-md" style="width: 50%;"></div>
+        </div>
+      </div>
+      <div id="panel-error" class="w-full hidden">
+        <div class="relative bg-red-100 border-2 border-red-500 shadow-md rounded-lg p-4">
+            <button id="close-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M13.414 6.586a2 2 0 0 1 2.828 2.828L12.828 12l3.414 3.414a2 2 0 1 1-2.828 2.828L10 14.828l-3.414 3.414a2 2 0 1 1-2.828-2.828L7.172 12 3.758 8.586a2 2 0 1 1 2.828-2.828L10 9.172l3.414-3.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+    
+            <div id="text-error" class="mt-2 text-md text-gray-700">
+                This is an error alert using Tailwind CSS.
+            </div>
+        </div>
+    </div>
+  </main>
+  <script type="module" src="/static/js/home.js"></script>
+
+{% endblock %}

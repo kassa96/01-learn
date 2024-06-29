@@ -1,0 +1,5 @@
+backend/**__pycache__**
+backend/**node_modules**
+backend/static/videos/*
+venv
+.env
