@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="flex min-h-screen flex-col items-center justify-center p-8 md:p-24 gap-4">
-    <div class="text-2xl md:text-5xl font-extrabold">
-    <span class="bg-clip-text py-10 text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
-  Doing It By Watching Trying And Asking
+<main class="flex bg-zinc-100 min-h-screen flex-col items-center justify-center p-8 md:p-24 gap-4">
+    <div class="flex flex-col ">
+    <span class="text-2xl md:text-5xl font-extrabold bg-clip-text p-2 text-center text-balance text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+  Programming By Watching Trying And Asking
+</span>
+<span class="text-sm md:text-2xl text-center font-bold text-balance">
+  Watch tutorial. Extract Code from tutorial. Summarize tutorial. Ask a chatbot.
 </span>
 </div>
       <div class="w-full">
@@ -12,10 +15,18 @@
       class="w-full p-4 border-2 outline-none border-gray-300 rounded-3xl
       focus:border-purple-500 focus:ring-2 focus:ring-purple-500"></input>
       </div>
-      <div class="w-full mt-8">
-        <div class="bg-gray-200 h-4 rounded-md">
-          <div class=" bg-gradient-to-r from-pink-500 to-violet-500 h-full rounded-md" style="width: 50%;"></div>
+      <div id="loading-indicator"class="hidden flex-col justify-center items-center">
+        <div>
+          <p class="p-2 text-lg font-semibold">Video loading</p>
         </div>
+        <div class="border-t-4 border-gray-500 rounded-full animate-spin h-12 w-12"></div>
+        
+      </div>
+      <div id="progress-bar-container" class="w-full hidden">
+        <div class="bg-gray-200 h-4 rounded-md relative">
+          <div id="progress_download" class="bg-gradient-to-r from-pink-500 to-violet-500 h-full rounded-md text-white text-center relative z-10" style="width: 0%;"></div>
+          <div id="progress_text" class="absolute inset-0 flex items-center justify-center text-gray-700 font-bold z-20"></div>
+      </div>
       </div>
       <div id="panel-error" class="w-full hidden">
         <div class="relative bg-red-100 border-2 border-red-500 shadow-md rounded-lg p-4">
@@ -24,11 +35,84 @@
                     <path fill-rule="evenodd" d="M13.414 6.586a2 2 0 0 1 2.828 2.828L12.828 12l3.414 3.414a2 2 0 1 1-2.828 2.828L10 14.828l-3.414 3.414a2 2 0 1 1-2.828-2.828L7.172 12 3.758 8.586a2 2 0 1 1 2.828-2.828L10 9.172l3.414-3.414z" clip-rule="evenodd" />
                 </svg>
             </button>
-    
-            <div id="text-error" class="mt-2 text-md text-gray-700">
-                This is an error alert using Tailwind CSS.
+            <div class="flex flex-col gap-2">
+              <div class="text-lg font-bold"id="title-error">
+                Provide your YouTube access key to use the YouTube API.
+              </div>
+              <div id="text-error" class="mt-2 text-md text-gray-700">
+                "erreur"
+              </div>
+              
+            </div>
             </div>
         </div>
+
+        <div id="panel-warning" class="w-full hidden">
+          <div class="relative bg-green-100 border-2 border-green-500 shadow-md rounded-lg p-4">
+              <div class="flex flex-col gap-2">
+                <div class="text-2xl font-bold">
+                  Provide your YouTube access key to use the YouTube API.
+                </div>
+                <div class="font-medium text-lg leading-relaxed">
+                  We have reached the free quota limit of our YouTube API key. To continue using our services for free, please generate your own YouTube API key. This key is essential to authenticate your requests and access YouTube API features such as video titles, thumbnails, descriptions, view counts, likes, and the ability to download videos for direct access from our platform.
+                </div>
+                <div class="">
+                  <h1 class="text-xl font-bold my-4">Get Your YouTube API Access Key</h1>
+                  <ol class="list-decimal list-inside flex flex-col gap-2 text-md">
+                      <li >
+                          Log in to the <a class="text-blue-700 hover:text-blue-400" href="https://console.cloud.google.com/">Google Developer Console</a>.
+                      </li>
+                      <li >
+                          Create a new project or select an existing project.
+                      </li>
+                      <li >
+                          Enable the YouTube API for your project.
+                      </li>
+                      <li >
+                          Create an API key in the "Credentials" section of your project.
+                      </li>
+                      <li >
+                          Copy your API key and paste it into this input below.
+                      </li>
+                      
+                  </ol>
+              </div>
+              
+                <div class="flex flex-col gap-4">
+                  <input type="text" id="api-key" name="api-key" class="mt-1 block w-full px-3 py-2 border border-gray-300 shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md" placeholder="Paste your YouTube API key here">
+                  <div>
+                    <a href="#" class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                      Add your YouTube API key</a>
+                  </div>
+                </div>
+              </div>
+              </div>
+          </div>
+    </div>
+    <div id="video-info" class="hidden w-full border-2 shadow-md ">
+      <div class="image-section">
+        <img id="video-photo" width="150" height="150" src="https://i.ytimg.com/vi/wMkvUjqQrls/default.jpg" />
+      </div>
+      <div class="flex flex-col p-2">
+        <div id="title-section">
+          <span id="video-title" class="text-md sm:text-xl xl:text-2xl text-black font-bold">Dave Ramsey : “AI is IMPRESSIVE” - 5 Genius Ways To Make Money with AI in 2024</span>
+
+        </div>
+        <div class="flex flex-row justify-around p-1 gap-4">
+          <div id="duration-section" class="flex flex-row gap-1">
+            <svg class="fill-violet-500" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M360-840v-80h240v80H360Zm80 440h80v-240h-80v240Zm40 320q-74 0-139.5-28.5T226-186q-49-49-77.5-114.5T120-440q0-74 28.5-139.5T226-694q49-49 114.5-77.5T480-800q62 0 119 20t107 58l56-56 56 56-56 56q38 50 58 107t20 119q0 74-28.5 139.5T734-186q-49 49-114.5 77.5T480-80Zm0-80q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-280Z"/></svg>
+            <span id="video-duration"class="text-lg font-bold text-violet-500"> 00:10:34s</span>
+        </div>
+        <div id="view-section" class="flex flex-row gap-1">
+          <span id="video-view" class="text-lg font-bold text-violet-500">64</span> 
+            <svg class="fill-violet-500" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-320q75 0 127.5-52.5T660-500q0-75-52.5-127.5T480-680q-75 0-127.5 52.5T300-500q0 75 52.5 127.5T480-320Zm0-72q-45 0-76.5-31.5T372-500q0-45 31.5-76.5T480-608q45 0 76.5 31.5T588-500q0 45-31.5 76.5T480-392Zm0 192q-146 0-266-81.5T40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200Zm0-300Zm0 220q113 0 207.5-59.5T832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280Z"/></svg>
+        </div>
+          <div id="like-section" class="flex flex-row gap-1">
+            <span id="video-like" class="text-lg font-bold text-violet-500">2</span> 
+            <svg class="fill-violet-500" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/></svg>
+        </div>
+        </div>
+      </div> 
     </div>
   </main>
   <script type="module" src="/static/js/home.js"></script>

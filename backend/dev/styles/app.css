@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.disabled-input:hover {
+    cursor: not-allowed; 
+}

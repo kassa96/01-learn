@@ -1,17 +1,20 @@
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+import asyncio
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.gzip import GZipMiddleware
+from dotenv import load_dotenv
+import os
+
 from youtube_utils import *
+
+load_dotenv()
 
 app=FastAPI()
 app.mount("/static",StaticFiles(directory="static"),name="static")
-app.add_middleware(GZipMiddleware)
 
 templates=Jinja2Templates(directory="templates")
-
-# Liste pour stocker les connexions WebSocket actives
-websocket_connections = []
+output_dir = 'static/videos/'
 
 @app.get("/")
 async def index(request:Request):
@@ -20,69 +23,78 @@ async def index(request:Request):
     )
 
 @app.get("/tutorial")
-async def index(request:Request):
-    return templates.TemplateResponse(
-        request=request, name="tutorial.html", context={"name": "kassa"}
-    )
-
+async def index(request:Request,video_id:str):
+    if not video_id:
+        return RedirectResponse(url="/")
+    output_dir = 'static/videos/'
+    file_name = video_id+".mp4"
+    video_path = os.path.join(output_dir, file_name);
+    if os.path.exists(video_path):
+        return templates.TemplateResponse(
+        request=request, name="tutorial.html", context={"video_path": video_path, "poster_url": ""})
+    else:
+        return RedirectResponse(url="/")
 
 @app.get("/tutorial/validate")
-def validateTutorial(video_id: str):
-    if video_id == False:
-        return {"status": "error", "message": "id video not exist"}
-    youtube = get_authenticated_service()
-    video_details = get_video_details(youtube, video_id)
-    if isinstance(video_details, dict):
-        return {"status": "ok", "data": video_details}
+def validateTutorial(video_url: str):
+    api_key = os.getenv('YOUTUBE_API_KEY')
+    video_details = {}
+    if api_key:
+        video_details, error = get_video_details_from_api(api_key, video_url)
     else:
-        return {"status": "error", "message": video_details}
+        video_details, error = get_video_details(video_url)
+    if error is not None:
+        video_details, error = get_video_details(api_key, video_url)
+        print("error from api:", error)
+        if error is not None:
+            print("error from pytube:", error)
+            return {"status": "error", 
+                "message": error
+                }
+    print("video details::", video_details)
+    file_name = video_details["id"]+".mp4"
+    path_video = os.path.join(output_dir, file_name);
+    if os.path.exists(path_video):
+        return {"status": "video_downloaded", "data": video_details}
+    else:
+        return {"status": "ok", "data": video_details}
     
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/ws/download/")
+async def websocket_download_video(websocket: WebSocket):
     await websocket.accept()
-    websocket_connections.append(websocket)
     try:
         while True:
-            url = await websocket.receive_text()  # Recevoir l'URL sous forme de texte
-            if url.strip():  # Vérifier si l'URL n'est pas vide
-                await download_video(url.strip(), websocket)
+            data = await websocket.receive_text()
+            url = data.strip()
+            await websocket.send_json({"message": "starting_download"})
+            asyncio.create_task(download_video(url,output_dir, websocket))
     except WebSocketDisconnect:
         pass
-    finally:
-        websocket_connections.remove(websocket)
 
-async def send_progress(progress, websocket):
+async def download_video1(url: str, websocket: WebSocket):
     try:
-        await websocket.send_json({
-            "progress": progress
-        })
-    except Exception as e:
-        print(f"Error sending progress: {e}")
+        yt = YouTube(url)
+        stream = yt.streams.get_highest_resolution()
+        
+        if not stream:
+            raise ValueError("Video stream not available")
+        output_dir = 'static/videos/'
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        stream.download(output_dir)
+        default_filename = stream.default_filename
+        video_id = yt.video_id
+        extension = os.path.splitext(default_filename)[1]
+        new_filename = f"{video_id}{extension}"
+        os.rename(os.path.join(output_dir, default_filename), os.path.join(output_dir, new_filename))
 
-async def download_video(url: str, websocket: WebSocket):
-    try:
-        youtube = YouTube(url)
-        stream = youtube.streams.filter(progressive=True, file_extension='mp4').first()
-        total_bytes = stream.filesize
+        await websocket.send_json({"message": "download_successfull", "filename": new_filename})
+        await websocket.close()        
 
-        bytes_written = 0
-        with open('video.mp4', 'wb') as f:
-            # Téléchargement du flux vidéo
-            stream.download(output_path='static/videos', filename='file')
-
-            # Calcul de la progression du téléchargement
-            while bytes_written < total_bytes:
-                bytes_written = os.path.getsize('static/videos/file.mp4')
-                progress = bytes_written / total_bytes
-                await send_progress(progress, websocket)
-
-            # Renommer le fichier temporaire une fois le téléchargement terminé
-            os.rename('temp.mp4', 'video.mp4')
-
-        await send_progress(1.0, websocket)  # Envoyer la progression finale
+    except ValueError as e:
+        await websocket.send_json({"error": str(e)})
+        raise HTTPException(status_code=400, detail=str(e))
 
     except Exception as e:
-        await websocket.send_json({
-            "error": str(e)
-        })
+        await websocket.send_json({"error": f"Error downloading video: {str(e)}"})
+        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
