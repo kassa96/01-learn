@@ -16,11 +16,17 @@ app.mount("/static",StaticFiles(directory="static"),name="static")
 templates=Jinja2Templates(directory="templates")
 output_dir = 'static/videos/'
 
+@app.get("/ask")
+async def index(request:Request):
+    return templates.TemplateResponse(
+        request=request, name="ask.html")
+
 @app.get("/")
 async def index(request:Request):
     return templates.TemplateResponse(
         request=request, name="home.html", context={"name": "kassa"}
     )
+
 
 @app.get("/tutorial")
 async def index(request:Request,video_id:str):
@@ -44,7 +50,7 @@ def validateTutorial(video_url: str):
     else:
         video_details, error = get_video_details(video_url)
     if error is not None:
-        video_details, error = get_video_details(api_key, video_url)
+        video_details, error = get_video_details_from_api(api_key, video_url)
         print("error from api:", error)
         if error is not None:
             print("error from pytube:", error)

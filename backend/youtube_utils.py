@@ -142,6 +142,33 @@ async def download_video(url: str, output_dir: str, websocket: WebSocket):
     try:
         yt = YouTube(url)
         stream = yt.streams.get_highest_resolution()
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        stream.download(output_dir)
+        
+        # Obtenir le nom de fichier par défaut
+        default_filename = stream.default_filename
+        
+        # Obtenir l'ID de la vidéo
+        video_id = yt.video_id
+        
+        # Renommer le fichier téléchargé avec l'ID de la vidéo
+        extension = os.path.splitext(default_filename)[1]
+        new_filename = f"{video_id}{extension}"
+        os.rename(os.path.join(output_dir, default_filename), os.path.join(output_dir, new_filename))
+        await websocket.send_json({"message": "download_successful", "filename": new_filename})
+    except Exception as e:
+        print("error:", e)
+        await websocket.send_json({"status": "error", "message": "Downloading is instanely interruped: try another time or video"})
+    finally:
+        await websocket.close()
+
+
+async def download_video1(url: str, output_dir: str, websocket: WebSocket):
+    try:
+        print("url----------:", url)
+        yt = YouTube(url)
+        stream = yt.streams.get_highest_resolution()
         if not stream:
             raise ValueError("Video not available")
         
@@ -157,28 +184,36 @@ async def download_video(url: str, output_dir: str, websocket: WebSocket):
         
         await websocket.send_json({"message": "download_successful", "filename": new_filename})
         
-    except RegexMatchError:
-        await websocket.send_json({"status": "error", "message": "The provided URL is not valid."})
-        
-    except VideoUnavailable:
+    except VideoUnavailable as e:
+        print("error2:", e)
         await websocket.send_json({"status": "error", "message": "The requested video is unavailable."})
-        
-    except LiveStreamError:
+
+    except RegexMatchError as e:
+        print("error1:", e)
+        await websocket.send_json({"status": "error", "message": "The provided URL is not valid."})
+            
+    except LiveStreamError as e:
+        print("error3:", e)
         await websocket.send_json({"status": "error", "message": "Cannot download live streams."})
         
-    except AgeRestrictedError:
+    except AgeRestrictedError as e:
+        print("error4:", e)
         await websocket.send_json({"status": "error", "message": "The video is age-restricted."})
         
-    except VideoRegionBlocked:
+    except VideoRegionBlocked as e:
+        print("error5:", e)
         await websocket.send_json({"status": "error", "message": "The video is blocked in your region."})
         
-    except PytubeError:
+    except PytubeError as e:
+        print("error6:", e)
         await websocket.send_json({"status": "error", "message": "Error downloading video."})
         
     except ValueError as e:
+        print("error7:", e)
         await websocket.send_json({"status": "error", "message": str(e)})
         
-    except Exception:
+    except Exception as e:
+        print("error8:", e)
         await websocket.send_json({"status": "error", "message": "Unexpected error occurred."})
         
     finally:
