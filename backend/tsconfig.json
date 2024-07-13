@@ -5,9 +5,8 @@
     "lib": ["es2015", "dom"],
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "strict": true,                           /* Specify what module code is generated. */
-    "outDir": "./static/js",                                   /* Specify an output folder for all emitted files. */
-                                    /* Skip type checking all .d.ts files. */
+    "strict": true,                          
+    "outDir": "./static/js",                                  
   },
   "include": [
     "dev/ts/**/*.ts"  
