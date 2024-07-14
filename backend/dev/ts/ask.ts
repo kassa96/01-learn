@@ -37,17 +37,7 @@ watchLink.addEventListener("click", (e)=>{
 extractLink.addEventListener("click", (e)=>{
     e.preventDefault()
     if (showRectangle){
-        const imageData = getCapture()
-        if (imageData != null){
-            const render = imageRender(imageData)
-            const content = discussionSection.innerHTML + render
-            discussionSection.innerHTML = content
-            showDiscussionSection()
-            activeLink("discussion-section")
-            window.scrollTo(0, document.body.scrollHeight);
-           // mainContent.scrollTop = mainContent.scrollHeight
-           console.log("okkkkkkk")
-        }
+        processCapture();        
         return
     }
     showVideoSection()
@@ -103,38 +93,107 @@ function activeLink(name: String){
 }
 
 function repositionCanvas(){
-    console.log("reposition")
     if (rectangle != null){
       rectangle.repositionCanvas(video)
     }
   }
-  
-  function getCapture(): String | null {
-    if (rectangle != null && video != null) {
-      const tempCanvas = document.createElement('canvas');
-      const { width, height } = video.getBoundingClientRect();
-      tempCanvas.width = width 
-      tempCanvas.height = height;
-      const tempCtx = tempCanvas.getContext('2d');
-      if (tempCtx) {
-        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
-        const imageData = tempCtx.getImageData(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
-        const cutCanvas = document.createElement('canvas');
-        const cutCtx = cutCanvas.getContext('2d');
-        cutCanvas.width = rectangle.width;
-        cutCanvas.height = rectangle.height;
-        cutCanvas.classList.remove("hidden");
-        cutCtx!.putImageData(imageData, 0, 0);
-        tempCtx.clip();
-        return cutCanvas.toDataURL();
+
+function getCapture(): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      if (rectangle != null && video != null) {
+        const tempCanvas = document.createElement('canvas');
+        const { width, height } = video.getBoundingClientRect();
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (tempCtx) {
+          tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+          const imageData = tempCtx.getImageData(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
+          const cutCanvas = document.createElement('canvas');
+          const cutCtx = cutCanvas.getContext('2d');
+          cutCanvas.width = rectangle.width;
+          cutCanvas.height = rectangle.height;
+          cutCtx!.putImageData(imageData, 0, 0);
+          cutCanvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+              const base64data = reader.result?.toString() as string;
+              if (base64data !== null){
+                resolve(base64data);
+              }else{
+
+              }
+            };
+          }, 'image/png');
+        } else {
+            reject(new Error('Failed to create blob'));
+        }
+      } else {
+        reject(new Error('Failed to create blob')); 
       }
-      return null
+    });
+  }
+
+  async function uploadImage(base64Data: string | null): Promise<string | null> {
+    if (!base64Data) {
+      console.error('No image data provided');
+      return null;
     }
-    return null
-  }  
+  
+    try {
+      const response = await fetch('/save/image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image_data: base64Data }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+  
+      const responseData = await response.json();
+      return responseData.code;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  }
+  
+  async function processCapture() {
+    try {
+      const base64Data = await getCapture();
+      if (base64Data) {
+            const render = imageRender(base64Data)
+            const content = discussionSection.innerHTML + render
+            discussionSection.innerHTML = content
+            showDiscussionSection()
+            activeLink("discussion-section")
+            window.scrollTo(0, document.body.scrollHeight);
+            discussionSection.scrollTop = discussionSection.scrollHeight
+            const code = await uploadImage(base64Data);
+            if (code) {
+                const render = messageRender(code)
+                const content = discussionSection.innerHTML + render
+                discussionSection.innerHTML = content
+            } else {
+            console.log('Failed to save image.');
+            }
+      } else {
+        console.log('Failed to capture image.');
+      }
+    } catch (error) {
+      console.error('Error processing capture:', error);
+    }
+  }
 
-
-function imageRender(dataUrl: String | null){
+  function imageRender(dataUrl: String){
     return ` <div
     class="flex w-full p-4  gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
     <span class="">
@@ -148,3 +207,16 @@ function imageRender(dataUrl: String | null){
     </div>
 </div>`
 }
+
+function messageRender(message: String){
+    return `<div
+    class="w-full p-4 flex flex-row gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
+    <span class="">
+        <svg xmlns="http://www.w3.org/2000/svg" height="41px" viewBox="0 -960 960 960" width="41px" fill="#5f6368"><path d="M200-120q-33 0-56.5-23.5T120-200v-400q0-100 70-170t170-70h240q100 0 170 70t70 170v400q0 33-23.5 56.5T760-120H200Zm0-80h560v-400q0-66-47-113t-113-47H360q-66 0-113 47t-47 113v400Zm160-280q-33 0-56.5-23.5T280-560q0-33 23.5-56.5T360-640q33 0 56.5 23.5T440-560q0 33-23.5 56.5T360-480Zm240 0q-33 0-56.5-23.5T520-560q0-33 23.5-56.5T600-640q33 0 56.5 23.5T680-560q0 33-23.5 56.5T600-480ZM280-200v-80q0-33 23.5-56.5T360-360h240q33 0 56.5 23.5T680-280v80h-80v-80h-80v80h-80v-80h-80v80h-80Zm-80 0h560-560Z"/></svg>
+    </span>
+    <span class="flex flex-col">
+        <p>${message}</p>
+    </span>
+</div>`
+}
+  

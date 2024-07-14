@@ -1,12 +1,22 @@
 import asyncio
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+import time
+from dotenv import load_dotenv
+import os
+from pydantic import BaseModel
+import base64
+from io import BytesIO
+from PIL import Image
+import os
+import uuid
+
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
-import os
+from fastapi.responses import JSONResponse
 
 from youtube_utils import *
+from chatbot import extractCode
 
 load_dotenv()
 
@@ -77,30 +87,23 @@ async def websocket_download_video(websocket: WebSocket):
     except WebSocketDisconnect:
         pass
 
-async def download_video1(url: str, websocket: WebSocket):
+class ImageData(BaseModel):
+    image_data: str
+
+@app.post("/save/image")
+async def save_image(image_data: ImageData):
     try:
-        yt = YouTube(url)
-        stream = yt.streams.get_highest_resolution()
+        decoded_image = base64.b64decode(image_data.image_data.split(',')[1])        
+        timestamp = int(time.time() * 1000)  
+        random_str = str(uuid.uuid4().hex[:4])   
+        filename = f"image_{timestamp}_{random_str}.png"
         
-        if not stream:
-            raise ValueError("Video stream not available")
-        output_dir = 'static/videos/'
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        stream.download(output_dir)
-        default_filename = stream.default_filename
-        video_id = yt.video_id
-        extension = os.path.splitext(default_filename)[1]
-        new_filename = f"{video_id}{extension}"
-        os.rename(os.path.join(output_dir, default_filename), os.path.join(output_dir, new_filename))
-
-        await websocket.send_json({"message": "download_successfull", "filename": new_filename})
-        await websocket.close()        
-
-    except ValueError as e:
-        await websocket.send_json({"error": str(e)})
-        raise HTTPException(status_code=400, detail=str(e))
-
+        # Sauvegarder le fichier
+        path = os.path.join("static", "captures", filename)
+        with open(path, "wb") as f:
+            f.write(decoded_image)
+        code = extractCode(path)
+        return {"filename": filename, "code": code}
     except Exception as e:
-        await websocket.send_json({"error": f"Error downloading video: {str(e)}"})
-        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
+        print("error--:", e)
+        raise HTTPException(status_code=500, detail=str(e))
