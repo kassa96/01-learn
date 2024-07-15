@@ -144,7 +144,7 @@ function getCapture(): Promise<string | null> {
       console.error('No image data provided');
       return null;
     }
-  
+    console.log("image data:", base64Data)
     try {
       const response = await fetch('/save/image', {
         method: 'POST',

@@ -93,7 +93,15 @@ class ImageData(BaseModel):
 @app.post("/save/image")
 async def save_image(image_data: ImageData):
     try:
-        decoded_image = base64.b64decode(image_data.image_data.split(',')[1])        
+        image_data_str = image_data.image_data
+        # Vérifier que les données commencent par 'data:image/'
+        if not image_data_str.startswith('data:image/'):
+            raise HTTPException(status_code=400, detail="Invalid image data format")
+        
+        # Extraire les données base64 après la virgule
+        encoded_data = image_data_str.split(',')[1]
+        decoded_image = base64.b64decode(encoded_data)
+        
         timestamp = int(time.time() * 1000)  
         random_str = str(uuid.uuid4().hex[:4])   
         filename = f"image_{timestamp}_{random_str}.png"
@@ -102,8 +110,10 @@ async def save_image(image_data: ImageData):
         path = os.path.join("static", "captures", filename)
         with open(path, "wb") as f:
             f.write(decoded_image)
+        
         code = extractCode(path)
         return {"filename": filename, "code": code}
+    
     except Exception as e:
         print("error--:", e)
         raise HTTPException(status_code=500, detail=str(e))

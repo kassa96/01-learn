@@ -177,6 +177,7 @@ function uploadImage(base64Data) {
                         console.error('No image data provided');
                         return [2 /*return*/, null];
                     }
+                    console.log("image data:", base64Data);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
