@@ -4,22 +4,17 @@ from dotenv import load_dotenv
 import os
 from pydantic import BaseModel
 import base64
-from io import BytesIO
-from PIL import Image
 import os
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect, UploadFile, File
+from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse
 
 from youtube_utils import *
 from chatbot import extractCode
-
-from starlette.middleware.base import BaseHTTPMiddleware
 
 load_dotenv()
 app=FastAPI()
@@ -35,7 +30,7 @@ async def index(request:Request):
 @app.get("/")
 async def index(request:Request):
     return templates.TemplateResponse(
-        request=request, name="home.html", context={"name": "kassa"}
+        request=request, name="home.html"
     )
 
 
@@ -91,20 +86,13 @@ async def websocket_download_video(websocket: WebSocket):
 class ImageData(BaseModel):
     image_data: str
 
-class Capture(BaseModel):
-    top: int
-    left: int
-    width: int
-    height: int
-    widthImage: int
-    heightImage: int
-    time: int
-
-
 CHUNK_SIZE = 1024*1024
-@app.get("/videos")
-async def video_endpoint(range: str = Header(None)):
-    video_path = Path("static/videos/hDVZykwl13I.mp4")
+@app.get("/videos/{video_id}")
+async def video_endpoint(video_id, range: str = Header(None)):
+    video_path = Path(f"static/videos/{video_id}.mp4")
+    print("path:", video_path)
+    if not video_path.is_file():
+        raise HTTPException(status_code=404, detail=f"Video ID {video_id} does not exist.")
     start, end = range.replace("bytes=", "").split("-")
     start = int(start)
     end = int(end) if end else start + CHUNK_SIZE
@@ -129,26 +117,8 @@ async def video_endpoint(range: str = Header(None)):
 
         return Response(data, status_code=206, headers=headers, media_type="video/mp4")
 
-
-@app.post("/capture")
-async def capture(capture: Capture):
-    video_path = 'static/videos/hDVZykwl13I.mp4'
-    output_dir = 'static/captures'  
-    # filename = capture_frame(video_path, output_dir, capture.time, 
-    #                          capture.widthImage, capture.heightImage,
-    #                          capture.left, capture.top, 
-    #                          capture.width, capture.height)
-    
-    # if filename != "":
-    #     code = extractCode(filename)
-    #     return {"filename": filename, "code": code}
-    # else:
-    #     return {"message": "Error capturing rectangle"}
-    return {"filename": "ok", "code": "ok"}
-
 @app.post("/save/image")
 async def save_image(image_data: ImageData):
-    print("ok")
     try:
         image_data_str = image_data.image_data
         # Vérifier que les données commencent par 'data:image/'

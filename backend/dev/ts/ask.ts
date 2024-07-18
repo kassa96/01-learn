@@ -2,16 +2,15 @@ import { Rectangle } from "./capture.js";
 
 const watchLink = document.getElementById("watch-link") as HTMLLinkElement
 const askLink = document.getElementById("ask-link") as HTMLLinkElement
+const captureLink = document.getElementById("capture-link") as HTMLLinkElement
 const extractLink = document.getElementById("extract-link") as HTMLLinkElement
 const videoSection = document.getElementById("video-panel") as HTMLElement
 const discussionSection = document.getElementById("discussion-panel") as HTMLElement
 const video = document.getElementById("tuto") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement
 const mainContent = document.getElementById("main-content") as HTMLDivElement
-const tutoContent = document.getElementById("tuto-panel") as HTMLDivElement
 let rectangle: Rectangle | null = null
 let showRectangle = false
-let pauseTimeInSeconds : number = 0;
 
 window.addEventListener("resize", repositionCanvas);
 
@@ -30,36 +29,47 @@ watchLink.addEventListener("click", (e)=>{
     canvas.style.display = "none"
     showVideoSection()
     activeLink("watch-section")
+    captureLink.style.display = "flex"
+    extractLink.style.display = "none"
     showRectangle = false
-    // let duration = 10*60
-    // video.src = `/static/videos/hDVZykwl13I.mp4#t=${duration}`;
-    // video.currentTime = duration;
-    // video.load();
-    // video.play();
+    if (video.paused){
+      video.play()
+    }
 })
 
 extractLink.addEventListener("click", (e)=>{
     e.preventDefault()
     if (showRectangle){
-        processCapture();        
-        return
+        captureLink.style.display = "flex"
+        extractLink.style.display = "none"
+        processCapture(); 
+        showDiscussionSection()  
+        activeLink("discussion-section")     
     }
-    showVideoSection()
-    showRectangle = true
-    activeLink("extract-section")
-    if (!video.paused) {
-        //video.pause();
-        pauseTimeInSeconds = video.currentTime;
-      }
-      canvas.style.display = "block";
-      rectangle = new Rectangle(canvas!, video);
-      rectangle.drawRectInCanvas();
 })
+
+captureLink.addEventListener("click", (e)=>{
+  e.preventDefault()
+  showVideoSection()
+  showRectangle = true
+  activeLink("extract-section")
+  captureLink.style.display = "none"
+  extractLink.style.display = "flex"
+  if (!video.paused) {
+      video.pause();
+    }
+    canvas.style.display = "block";
+    rectangle = new Rectangle(canvas!, video);
+    rectangle.drawRectInCanvas();
+})
+
 
 askLink.addEventListener("click", (e)=>{
     e.preventDefault()
     showDiscussionSection()
     activeLink("discussion-section")
+    captureLink.style.display = "flex"
+    extractLink.style.display = "none"
     showRectangle = false
     if (!video.paused) {
         video.pause();
@@ -94,7 +104,10 @@ function activeLink(name: String){
     } else if (name == "extract-section"){
         extractLink.classList.add("active-link")
         extractLink.classList.remove("link") 
-    }
+    }else if (name == "capture-section"){
+      captureLink.classList.add("active-link")
+      captureLink.classList.remove("link") 
+  }
 }
 
 function repositionCanvas(){
@@ -149,30 +162,14 @@ function getCapture(): Promise<string | null> {
         console.error('No image data provided');
         return null;
     }
-
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    // Définir la durée du timeout en millisecondes
-    const timeoutDuration = 10000; // 10 secondes
-
-    // Définir le timeout avec setTimeout
-    const timeoutId = setTimeout(() => {
-        controller.abort(); // Annuler la requête après le délai spécifié
-    }, timeoutDuration);
-
     try {
         const response = await fetch('/save/image', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ image_data: base64Data }),
-            signal  // Passer le signal d'annulation à fetch
+            body: JSON.stringify({ image_data: base64Data })
         });
-
-        clearTimeout(timeoutId); // Effacer le timeout si la requête réussit
-
         if (!response.ok) {
             throw new Error('Failed to upload file');
         }
@@ -180,12 +177,7 @@ function getCapture(): Promise<string | null> {
         const responseData = await response.json();
         return responseData.code;
     } catch (error: any) {
-        clearTimeout(timeoutId); // Effacer le timeout en cas d'erreur
-        if (error.name === 'AbortError') {
-            console.error('La requête a expiré en raison d\'un timeout');
-        } else {
-            console.error('Error uploading file:', error);
-        }
+      console.error('Error uploading file:', error);
         return null;
     }
 }
@@ -203,10 +195,6 @@ function getCapture(): Promise<string | null> {
             window.scrollTo(0, document.body.scrollHeight);
             discussionSection.scrollTop = discussionSection.scrollHeight
            const code = await uploadImage(base64Data);
-            // if (rectangle === null) return 
-            //   // video.src = ""
-            //   // video.load()  
-            //   const code = await sendCapture(rectangle, pauseTimeInSeconds)
             if (code) {
                 const render = messageRender(code)
                 const content = discussionSection.innerHTML + render
@@ -249,49 +237,3 @@ function messageRender(message: String){
 </div>`
 }
 
-
-async function sendCapture(rectangle: Rectangle, timePause: number): Promise<any> {
-    const info1 = {
-        left: Math.floor(rectangle.left),
-        top: Math.floor(rectangle.top),
-        width: Math.floor(rectangle.width),
-        height: Math.floor(rectangle.height),
-        widthImage: Math.floor(rectangle.canvas.width),
-        heightImage: Math.floor(rectangle.canvas.height),
-        time: timePause
-    };
-    const info = {
-      left: 5,
-      top: 5,
-      width: 5,
-      height: 5,
-      widthImage: 5,
-      heightImage: 5,
-      time: 5
-  };
-
-    console.log("info:", info)
-
-    const url = '/capture';
-
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(info),
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-        console.log('Server response:', data);
-        return data; // Renvoie les données reçues du serveur en cas de succès
-    } catch (error) {
-        console.error('Error sending data to server:', error);
-        throw error; // Lance une erreur pour la gestion des erreurs
-    }
-}
