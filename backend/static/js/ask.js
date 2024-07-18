@@ -43,8 +43,10 @@ var discussionSection = document.getElementById("discussion-panel");
 var video = document.getElementById("tuto");
 var canvas = document.getElementById("canvas");
 var mainContent = document.getElementById("main-content");
+var tutoContent = document.getElementById("tuto-panel");
 var rectangle = null;
 var showRectangle = false;
+var pauseTimeInSeconds = 0;
 window.addEventListener("resize", repositionCanvas);
 if (video !== null) {
     video.addEventListener('loadeddata', function () {
@@ -60,9 +62,11 @@ watchLink.addEventListener("click", function (e) {
     showVideoSection();
     activeLink("watch-section");
     showRectangle = false;
-    if (video.paused) {
-        video.play();
-    }
+    // let duration = 10*60
+    // video.src = `/static/videos/hDVZykwl13I.mp4#t=${duration}`;
+    // video.currentTime = duration;
+    // video.load();
+    // video.play();
 });
 extractLink.addEventListener("click", function (e) {
     e.preventDefault();
@@ -74,7 +78,8 @@ extractLink.addEventListener("click", function (e) {
     showRectangle = true;
     activeLink("extract-section");
     if (!video.paused) {
-        video.pause();
+        //video.pause();
+        pauseTimeInSeconds = video.currentTime;
     }
     canvas.style.display = "block";
     rectangle = new Rectangle(canvas, video);
@@ -169,7 +174,7 @@ function getCapture() {
 }
 function uploadImage(base64Data) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, responseData, error_1;
+        var controller, signal, timeoutDuration, timeoutId, response, responseData, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -177,7 +182,12 @@ function uploadImage(base64Data) {
                         console.error('No image data provided');
                         return [2 /*return*/, null];
                     }
-                    console.log("image data:", base64Data);
+                    controller = new AbortController();
+                    signal = controller.signal;
+                    timeoutDuration = 10000;
+                    timeoutId = setTimeout(function () {
+                        controller.abort(); // Annuler la requête après le délai spécifié
+                    }, timeoutDuration);
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
@@ -187,9 +197,11 @@ function uploadImage(base64Data) {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({ image_data: base64Data }),
+                            signal: signal // Passer le signal d'annulation à fetch
                         })];
                 case 2:
                     response = _a.sent();
+                    clearTimeout(timeoutId); // Effacer le timeout si la requête réussit
                     if (!response.ok) {
                         throw new Error('Failed to upload file');
                     }
@@ -199,7 +211,13 @@ function uploadImage(base64Data) {
                     return [2 /*return*/, responseData.code];
                 case 4:
                     error_1 = _a.sent();
-                    console.error('Error uploading file:', error_1);
+                    clearTimeout(timeoutId); // Effacer le timeout en cas d'erreur
+                    if (error_1.name === 'AbortError') {
+                        console.error('La requête a expiré en raison d\'un timeout');
+                    }
+                    else {
+                        console.error('Error uploading file:', error_1);
+                    }
                     return [2 /*return*/, null];
                 case 5: return [2 /*return*/];
             }
@@ -227,6 +245,10 @@ function processCapture() {
                     return [4 /*yield*/, uploadImage(base64Data)];
                 case 2:
                     code = _a.sent();
+                    // if (rectangle === null) return 
+                    //   // video.src = ""
+                    //   // video.load()  
+                    //   const code = await sendCapture(rectangle, pauseTimeInSeconds)
                     if (code) {
                         render_1 = messageRender(code);
                         content_1 = discussionSection.innerHTML + render_1;
@@ -254,4 +276,59 @@ function imageRender(dataUrl) {
 }
 function messageRender(message) {
     return "<div\n    class=\"w-full p-4 flex flex-row gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary\">\n    <span class=\"\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"41px\" viewBox=\"0 -960 960 960\" width=\"41px\" fill=\"#5f6368\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-400q0-100 70-170t170-70h240q100 0 170 70t70 170v400q0 33-23.5 56.5T760-120H200Zm0-80h560v-400q0-66-47-113t-113-47H360q-66 0-113 47t-47 113v400Zm160-280q-33 0-56.5-23.5T280-560q0-33 23.5-56.5T360-640q33 0 56.5 23.5T440-560q0 33-23.5 56.5T360-480Zm240 0q-33 0-56.5-23.5T520-560q0-33 23.5-56.5T600-640q33 0 56.5 23.5T680-560q0 33-23.5 56.5T600-480ZM280-200v-80q0-33 23.5-56.5T360-360h240q33 0 56.5 23.5T680-280v80h-80v-80h-80v80h-80v-80h-80v80h-80Zm-80 0h560-560Z\"/></svg>\n    </span>\n    <span class=\"flex flex-col\">\n        <p>".concat(message, "</p>\n    </span>\n</div>");
+}
+function sendCapture(rectangle, timePause) {
+    return __awaiter(this, void 0, void 0, function () {
+        var info1, info, url, response, data, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    info1 = {
+                        left: Math.floor(rectangle.left),
+                        top: Math.floor(rectangle.top),
+                        width: Math.floor(rectangle.width),
+                        height: Math.floor(rectangle.height),
+                        widthImage: Math.floor(rectangle.canvas.width),
+                        heightImage: Math.floor(rectangle.canvas.height),
+                        time: timePause
+                    };
+                    info = {
+                        left: 5,
+                        top: 5,
+                        width: 5,
+                        height: 5,
+                        widthImage: 5,
+                        heightImage: 5,
+                        time: 5
+                    };
+                    console.log("info:", info);
+                    url = '/capture';
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(info),
+                        })];
+                case 2:
+                    response = _a.sent();
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    data = _a.sent();
+                    console.log('Server response:', data);
+                    return [2 /*return*/, data]; // Renvoie les données reçues du serveur en cas de succès
+                case 4:
+                    error_3 = _a.sent();
+                    console.error('Error sending data to server:', error_3);
+                    throw error_3; // Lance une erreur pour la gestion des erreurs
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
 }

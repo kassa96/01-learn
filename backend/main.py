@@ -8,8 +8,9 @@ from io import BytesIO
 from PIL import Image
 import os
 import uuid
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, UploadFile, File
+from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -18,11 +19,11 @@ from fastapi.responses import JSONResponse
 from youtube_utils import *
 from chatbot import extractCode
 
-load_dotenv()
+from starlette.middleware.base import BaseHTTPMiddleware
 
+load_dotenv()
 app=FastAPI()
 app.mount("/static",StaticFiles(directory="static"),name="static")
-
 templates=Jinja2Templates(directory="templates")
 output_dir = 'static/videos/'
 
@@ -90,8 +91,64 @@ async def websocket_download_video(websocket: WebSocket):
 class ImageData(BaseModel):
     image_data: str
 
+class Capture(BaseModel):
+    top: int
+    left: int
+    width: int
+    height: int
+    widthImage: int
+    heightImage: int
+    time: int
+
+
+CHUNK_SIZE = 1024*1024
+@app.get("/videos")
+async def video_endpoint(range: str = Header(None)):
+    video_path = Path("static/videos/hDVZykwl13I.mp4")
+    start, end = range.replace("bytes=", "").split("-")
+    start = int(start)
+    end = int(end) if end else start + CHUNK_SIZE
+
+    # Assurez-vous que end ne dépasse pas la taille réelle du fichier
+    end = min(end, video_path.stat().st_size)
+
+    with open(video_path, "rb") as video:
+        video.seek(start)
+        data = video.read(end - start)
+
+        filesize = str(video_path.stat().st_size)
+        headers = {
+            'Content-Range': f'bytes {start}-{end-1}/{filesize}',
+            'Accept-Ranges': 'bytes'
+        }
+
+        # Si start est égal ou supérieur à la taille du fichier, renvoyer une réponse vide avec le code 416 (Requested Range Not Satisfiable)
+        if start >= video_path.stat().st_size:
+            headers['Content-Range'] = f'bytes */{filesize}'
+            return Response(status_code=416, headers=headers)
+
+        return Response(data, status_code=206, headers=headers, media_type="video/mp4")
+
+
+@app.post("/capture")
+async def capture(capture: Capture):
+    video_path = 'static/videos/hDVZykwl13I.mp4'
+    output_dir = 'static/captures'  
+    # filename = capture_frame(video_path, output_dir, capture.time, 
+    #                          capture.widthImage, capture.heightImage,
+    #                          capture.left, capture.top, 
+    #                          capture.width, capture.height)
+    
+    # if filename != "":
+    #     code = extractCode(filename)
+    #     return {"filename": filename, "code": code}
+    # else:
+    #     return {"message": "Error capturing rectangle"}
+    return {"filename": "ok", "code": "ok"}
+
 @app.post("/save/image")
 async def save_image(image_data: ImageData):
+    print("ok")
     try:
         image_data_str = image_data.image_data
         # Vérifier que les données commencent par 'data:image/'
