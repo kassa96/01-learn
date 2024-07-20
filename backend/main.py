@@ -1,12 +1,12 @@
 import asyncio
-import time
 from dotenv import load_dotenv
 import os
 from pydantic import BaseModel
 import base64
 import os
-import uuid
 from pathlib import Path
+from PIL import Image
+from io import BytesIO
 
 from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
@@ -23,10 +23,17 @@ templates=Jinja2Templates(directory="templates")
 output_dir = 'static/videos/'
 
 @app.get("/ask")
-async def index(request:Request):
-    return templates.TemplateResponse(
-        request=request, name="ask.html")
-
+async def index(request:Request,video_id:str):
+    if not video_id:
+        return RedirectResponse(url="/")
+    file_name = video_id+".mp4"
+    video_path = os.path.join(output_dir, file_name);
+    if os.path.exists(video_path):
+        path= "/videos/"+video_id
+        return templates.TemplateResponse(
+        request=request, name="ask.html", context={"path": path, "poster_url": ""})
+    else:
+        return RedirectResponse(url="/")
 @app.get("/")
 async def index(request:Request):
     return templates.TemplateResponse(
@@ -90,7 +97,6 @@ CHUNK_SIZE = 1024*1024
 @app.get("/videos/{video_id}")
 async def video_endpoint(video_id, range: str = Header(None)):
     video_path = Path(f"static/videos/{video_id}.mp4")
-    print("path:", video_path)
     if not video_path.is_file():
         raise HTTPException(status_code=404, detail=f"Video ID {video_id} does not exist.")
     start, end = range.replace("bytes=", "").split("-")
@@ -117,29 +123,18 @@ async def video_endpoint(video_id, range: str = Header(None)):
 
         return Response(data, status_code=206, headers=headers, media_type="video/mp4")
 
-@app.post("/save/image")
-async def save_image(image_data: ImageData):
+@app.post("/scan/image")
+async def scan_image(image_data: ImageData):
     try:
         image_data_str = image_data.image_data
-        # Vérifier que les données commencent par 'data:image/'
         if not image_data_str.startswith('data:image/'):
-            raise HTTPException(status_code=400, detail="Invalid image data format")
-        
-        # Extraire les données base64 après la virgule
+            raise HTTPException(status_code=400, detail="Invalid image data format")        
         encoded_data = image_data_str.split(',')[1]
         decoded_image = base64.b64decode(encoded_data)
-        
-        timestamp = int(time.time() * 1000)  
-        random_str = str(uuid.uuid4().hex[:4])   
-        filename = f"image_{timestamp}_{random_str}.png"
-        
-        # Sauvegarder le fichier
-        path = os.path.join("static", "captures", filename)
-        with open(path, "wb") as f:
-            f.write(decoded_image)
-        
-        code = extractCode(path)
-        return {"filename": filename, "code": code}
+        image = Image.open(BytesIO(decoded_image))
+        code = extractCode(image)
+        print("code:", code)
+        return {"code": code}
     
     except Exception as e:
         print("error--:", e)

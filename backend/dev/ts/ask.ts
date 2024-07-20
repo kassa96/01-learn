@@ -8,20 +8,24 @@ const videoSection = document.getElementById("video-panel") as HTMLElement
 const discussionSection = document.getElementById("discussion-panel") as HTMLElement
 const video = document.getElementById("tuto") as HTMLVideoElement;
 const canvas = document.getElementById("canvas") as HTMLCanvasElement
-const mainContent = document.getElementById("main-content") as HTMLDivElement
+const textError = document.getElementById("text-error") as HTMLDivElement;
+const titleError = document.getElementById("title-error") as HTMLDivElement;
+const divError = document.getElementById("panel-error") as HTMLDivElement;
+const codeSection = document.getElementById('code-section') as HTMLDivElement;
+const codeText = document.getElementById("code-text") as HTMLElement;
+const codeImage = document.getElementById("code-image") as HTMLImageElement;
+const scanningIndicator = document.getElementById("typing-indicator") as HTMLDivElement;
+
 let rectangle: Rectangle | null = null
 let showRectangle = false
 
 window.addEventListener("resize", repositionCanvas);
 
-
 if (video !== null){
-    video.addEventListener('loadeddata', () => {
         canvas.addEventListener('mousedown', (e) => rectangle!.mouseDown(e));
         canvas.addEventListener('mousemove', (e) => rectangle!.mouseMove(e));
         canvas.addEventListener('mouseup', () => rectangle!.mouseUp());
         canvas.addEventListener('mouseleave', () => rectangle!.mouseUp());
-  });
   }
 
 watchLink.addEventListener("click", (e)=>{
@@ -42,9 +46,8 @@ extractLink.addEventListener("click", (e)=>{
     if (showRectangle){
         captureLink.style.display = "flex"
         extractLink.style.display = "none"
-        processCapture(); 
-        showDiscussionSection()  
-        activeLink("discussion-section")     
+        activeLink("discussion-section") 
+        processCapture();     
     }
 })
 
@@ -88,6 +91,9 @@ function showDiscussionSection(){
     videoSection.classList.add("hidden")
     discussionSection.classList.remove("hidden")
     discussionSection.classList.add("flex")
+    codeSection.style.display = "none"
+    divError.style.display = "none"
+    scanningIndicator.style.display = "none"
 }
 
 function activeLink(name: String){
@@ -134,6 +140,10 @@ function getCapture(): Promise<string | null> {
           cutCtx!.putImageData(imageData, 0, 0);
           cutCanvas.toBlob((blob) => {
             if (!blob) {
+              titleError.innerText = "Error while capturing image"
+              textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again."
+              divError.style.display="block"
+              scanningIndicator.style.display = "none"
               reject(new Error('Failed to create blob'));
               return;
             }
@@ -144,14 +154,26 @@ function getCapture(): Promise<string | null> {
               if (base64data !== null){
                 resolve(base64data);
               }else{
-
+                titleError.innerText = "Error while capturing image"
+                textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again."
+                divError.style.display="block"
+                scanningIndicator.style.display = "none"
+                reject(new Error('Failed to create blob'));
+                return;
               }
             };
           }, 'image/png');
         } else {
-            reject(new Error('Failed to create blob'));
+             titleError.innerText = "Error while capturing image"
+              textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again."
+              divError.style.display="block"
+              reject(new Error('Failed to create blob'));
         }
       } else {
+        titleError.innerText = "Error while capturing image"
+        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again."
+        divError.style.display="block"
+        scanningIndicator.style.display = "none"
         reject(new Error('Failed to create blob')); 
       }
     });
@@ -160,26 +182,51 @@ function getCapture(): Promise<string | null> {
   async function uploadImage(base64Data: string | null): Promise<string | null> {
     if (!base64Data) {
         console.error('No image data provided');
+        titleError.innerText = "Error while capturing image"
+        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again."
+        divError.style.display="block"
+        scanningIndicator.style.display = "none"
         return null;
     }
     try {
-        const response = await fetch('/save/image', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image_data: base64Data })
-        });
-        if (!response.ok) {
-            throw new Error('Failed to upload file');
-        }
-
-        const responseData = await response.json();
-        return responseData.code;
-    } catch (error: any) {
+      const controller = new AbortController();
+      const signal = controller.signal;  
+      const timeoutId = setTimeout(() => {
+          controller.abort(); 
+          titleError.innerText = "Timeout exceeded"
+          textError.innerText = "The request took too long and was canceled. Please try again later."
+          divError.style.display="block"
+          scanningIndicator.style.display = "none"
+      }, 120000);
+  
+      const response = await fetch('/scan/image', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ image_data: base64Data }),
+          signal: signal 
+      });
+  
+      clearTimeout(timeoutId);
+  
+      if (!response.ok) {
+          throw new Error('Failed to upload file');
+      }
+  
+      const responseData = await response.json();
+      return responseData.code;
+  } catch (error) {
+      titleError.innerText = "Internal server error"
+      textError.innerText = `An error occurred when you are trying 
+                              to connect to the server. Please check your internet connection. 
+                              If the issue persists, please try again later or 
+                              contact the site administrator at kassadiallo@gmail.com.`
+      divError.style.display="block"
+      scanningIndicator.style.display = "none"
       console.error('Error uploading file:', error);
-        return null;
-    }
+      return null;
+  }
 }
 
   
@@ -187,18 +234,18 @@ function getCapture(): Promise<string | null> {
     try {
       const base64Data = await getCapture();
       if (base64Data) {
-            const render = imageRender(base64Data)
-            const content = discussionSection.innerHTML + render
-            discussionSection.innerHTML = content
             showDiscussionSection()
             activeLink("discussion-section")
-            window.scrollTo(0, document.body.scrollHeight);
-            discussionSection.scrollTop = discussionSection.scrollHeight
+            codeImage.src= base64Data
+            scanningIndicator.style.display = "block"
            const code = await uploadImage(base64Data);
             if (code) {
-                const render = messageRender(code)
-                const content = discussionSection.innerHTML + render
-                discussionSection.innerHTML = content
+                divError.style.display="none"
+                let formated_code = code.replace(/^`|`$/g, '')
+                codeText.textContent = formated_code    
+                codeSection.style.display = "flex"
+                divError.style.display = "none"            
+                scanningIndicator.style.display = "none"
             } else {
             console.log('Failed to save image.');
             }
@@ -210,30 +257,4 @@ function getCapture(): Promise<string | null> {
     }
   }
 
-  function imageRender(dataUrl: String){
-    return ` <div
-    class="flex w-full p-4  gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
-    <span class="">
-        <svg xmlns="http://www.w3.org/2000/svg" height="41px" viewBox="0 -960 960 960" width="41px"  class="icon-md" role="img" fill="#000000"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/></svg>
-    </span>
-    <div class="flex flex-col">
-            <p class="px-5 py-3">extract this code for me</p>
-            <p>
-                <img src="${dataUrl}" class="object-contain rounded-2xl" />
-            </p>
-    </div>
-</div>`
-}
-
-function messageRender(message: String){
-    return `<div
-    class="w-full p-4 flex flex-row gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
-    <span class="">
-        <svg xmlns="http://www.w3.org/2000/svg" height="41px" viewBox="0 -960 960 960" width="41px" fill="#5f6368"><path d="M200-120q-33 0-56.5-23.5T120-200v-400q0-100 70-170t170-70h240q100 0 170 70t70 170v400q0 33-23.5 56.5T760-120H200Zm0-80h560v-400q0-66-47-113t-113-47H360q-66 0-113 47t-47 113v400Zm160-280q-33 0-56.5-23.5T280-560q0-33 23.5-56.5T360-640q33 0 56.5 23.5T440-560q0 33-23.5 56.5T360-480Zm240 0q-33 0-56.5-23.5T520-560q0-33 23.5-56.5T600-640q33 0 56.5 23.5T680-560q0 33-23.5 56.5T600-480ZM280-200v-80q0-33 23.5-56.5T360-360h240q33 0 56.5 23.5T680-280v80h-80v-80h-80v80h-80v-80h-80v80h-80Zm-80 0h560-560Z"/></svg>
-    </span>
-    <span class="flex flex-col">
-        <p>${message}</p>
-    </span>
-</div>`
-}
-
+  

@@ -36,12 +36,12 @@
           </div>
         </div>
 </nav>
-<main id="main-content" class="flex flex-1 flex-col  items-center h-full mt-28 mb-36">
+<main id="main-content" class="flex flex-1 flex-col  items-center h-full mt-28">
 <section id="video-panel" class="flex max-sm:w-full md:w-8/12 justify-center items-center">
     <div class="w-full flex-col justify-center items-center">
         <div style="position:relative" class ="shadow-2xl rounded-md " >
-            <video id="tuto" src="/videos/gK288ZfzjCc" type="video/mp4" class="w-full object-cover" poster="{{ poster_url }}"
-            width="auto" height="auto" controls>
+            <video id="tuto" src="{{path }}" type="video/mp4" class="w-full object-cover" poster="{{ poster_url }}"
+            width="auto" height="auto" autoplay controls>
             Your browser does not support HTML5 video playback.
           </video>
         <canvas id="canvas" 
@@ -51,44 +51,75 @@
         <img class="hidden border-2 border-green-800" id="capturedImage" src="" alt="Captured Image">
         </div>
 </section>
-<section id="discussion-panel" class="hidden flex-1 w-full md:w-8/12 xl:w-6/12  flex-col justify-end gap-2 items-center">
-    <section class="fixed hidden z-50 bottom-0 px-8 py-2 left-0 right-0 bg-skin-primary">
-        <div class="w-full flex justify-center items-center py-2">
-            <div id="typing-indicator" class="flex">
-                <span class="text-lg  font-semibold">The chabot is thinking</span>
-                <div class="dot bg-purple-500"></div>
-                <div class="dot bg-purple-500"></div>
-                <div class="dot bg-purple-500"></div>
-              </div>
-        </div>
-        <form method="post" class="w-full"> 
-            <textarea id="ask-input" name="q" placeholder="Ask AI something" spellcheck="false"
-                class="w-full border outline-none border-skin-primary focus:border-purple-500 focus:ring-2 focus:ring-purple-500 bg-white rounded-[32px] text-black py-[18px] pl-6 text-base md:text-lg h-16 max-h-96 placeholder:text-skin-tertiary resize-none  shadow disabled:bg-skin-input-disabled disabled:text-skin-disabled disabled:cursor-not-allowed search-value"
-                ></textarea>
-        </form>
-    </section>
-    <div
-        class="w-full p-4 flex flex-row gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
-        <span class="">
-            <svg xmlns="http://www.w3.org/2000/svg" height="41px" viewBox="0 -960 960 960" width="41px" fill="#5f6368"><path d="M200-120q-33 0-56.5-23.5T120-200v-400q0-100 70-170t170-70h240q100 0 170 70t70 170v400q0 33-23.5 56.5T760-120H200Zm0-80h560v-400q0-66-47-113t-113-47H360q-66 0-113 47t-47 113v400Zm160-280q-33 0-56.5-23.5T280-560q0-33 23.5-56.5T360-640q33 0 56.5 23.5T440-560q0 33-23.5 56.5T360-480Zm240 0q-33 0-56.5-23.5T520-560q0-33 23.5-56.5T600-640q33 0 56.5 23.5T680-560q0 33-23.5 56.5T600-480ZM280-200v-80q0-33 23.5-56.5T360-360h240q33 0 56.5 23.5T680-280v80h-80v-80h-80v80h-80v-80h-80v80h-80Zm-80 0h560-560Z"/></svg>
-        </span>
-        <span class="flex flex-col">
-            <p>Pour aligner les éléments de la section en bas, vous pouvez utiliser les classes de Tailwind CSS pour aligner verticalement les éléments. Voici comment vous pourriez modifier votre code :</p>
-        </span>
+<div id="discussion-panel" class="hidden flex-col justify-center items-center">
+  <div class="flex flex-col ">
+    <span class="text-xl md:text-3xl font-extrabold bg-clip-text p-4 md:p-6 text-center text-balance text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+      SCREENSHOT TO CODE
+</span>
+  </div>
+<div class="flex justify-center gap-4 flex-wrap">
+  <div class="">
+    <img id="code-image" src="/static/captures/image1.png" class="object-contain rounded-2xl bg-skin-primary shadow-sm"/>
+  </div>
+  <div id="code-section" class="hidden flex-col rounded-2xl bg-black justify-center items-center shadow overflow-hidden">
+    <div class="flex w-full bg-zinc-800 p-4 px-4 py-2 text-md font-sans shadow-sm text-zinc-500 justify-between rounded-t-md">
+      <span>Javascript</span>
+      <a href="#" class="flex gap-2 hover:text-zinc-400" title="copy the extracted snippet code">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" class="icon-sm"><path fill="currentColor" fill-rule="evenodd" d="M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1zM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1z" clip-rule="evenodd"></path></svg>
+        <span>Copy the code</span>
+      </a>
     </div>
-    <div
-    class="w-full p-4 flex gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary">
-    <span class="">
-        <svg xmlns="http://www.w3.org/2000/svg" height="41px" viewBox="0 -960 960 960" width="41px"  class="icon-md" role="img" fill="#000000"><path d="M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z"/></svg>
-    </span>
-    <div class="flex flex-col">
-            <p>extrait pour moi ce code</p>
-            <p>
-                <img src="/static/captures/image1.png" class="object-contain rounded-2xl">
-            </p>
+    <div class="p-4 bg-zinc-950">
+      <pre><code class="language-javascript1 text-white whitespace-pre-line overflow-x-auto max-w-xs" id="code-text">    
+        function isPast(date) {
+            if (!isValid(date)) {
+                return false;
+            }
+            if (new Date(date).getTime() < Date.now()) {
+                return true;
+            }
+            return false;
+        }
+          </code></pre>
     </div>
+  </div>
 </div>
-</section>
+<div id="typing-indicator" class="flex flex-wrap p-4">
+  <span class="text-md  font-semibold">Please wait, scanning in progress.</span>
+  <span class="text-md  font-semibold">This may take a few seconds</span>
+ <div class= "flex w-full mt-4 justify-center items-center">
+ <div class="dot bg-purple-500"></div>
+ <div class="dot bg-purple-500"></div>
+ <div class="dot bg-purple-500"></div>
+ </div>
+</div>
+<div id="panel-error" class="p-4 ">
+  <div class="relative bg-red-100 border-2 border-red-500 shadow-md rounded-lg p-4">
+      <button id="close-btn" class="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 focus:outline-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M13.414 6.586a2 2 0 0 1 2.828 2.828L12.828 12l3.414 3.414a2 2 0 1 1-2.828 2.828L10 14.828l-3.414 3.414a2 2 0 1 1-2.828-2.828L7.172 12 3.758 8.586a2 2 0 1 1 2.828-2.828L10 9.172l3.414-3.414z" clip-rule="evenodd" />
+          </svg>
+      </button>
+      <div class="flex flex-col gap-2">
+        <div class="text-lg font-bold"id="title-error">
+         
+        </div>
+        <div id="text-error" class="mt-2 text-md text-gray-700">
+          
+        </div>
+      </div>
+      </div>
+  </div>
+</div>
 </main>
 <script type="module" src="/static/js/ask.js"></script>
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.7.0/highlight.min.js"></script>
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.7.0/languages/javascript.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block);
+  });
+});
+</script>
 {% endblock %}

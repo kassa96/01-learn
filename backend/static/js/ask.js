@@ -43,17 +43,21 @@ var videoSection = document.getElementById("video-panel");
 var discussionSection = document.getElementById("discussion-panel");
 var video = document.getElementById("tuto");
 var canvas = document.getElementById("canvas");
-var mainContent = document.getElementById("main-content");
+var textError = document.getElementById("text-error");
+var titleError = document.getElementById("title-error");
+var divError = document.getElementById("panel-error");
+var codeSection = document.getElementById('code-section');
+var codeText = document.getElementById("code-text");
+var codeImage = document.getElementById("code-image");
+var scanningIndicator = document.getElementById("typing-indicator");
 var rectangle = null;
 var showRectangle = false;
 window.addEventListener("resize", repositionCanvas);
 if (video !== null) {
-    video.addEventListener('loadeddata', function () {
-        canvas.addEventListener('mousedown', function (e) { return rectangle.mouseDown(e); });
-        canvas.addEventListener('mousemove', function (e) { return rectangle.mouseMove(e); });
-        canvas.addEventListener('mouseup', function () { return rectangle.mouseUp(); });
-        canvas.addEventListener('mouseleave', function () { return rectangle.mouseUp(); });
-    });
+    canvas.addEventListener('mousedown', function (e) { return rectangle.mouseDown(e); });
+    canvas.addEventListener('mousemove', function (e) { return rectangle.mouseMove(e); });
+    canvas.addEventListener('mouseup', function () { return rectangle.mouseUp(); });
+    canvas.addEventListener('mouseleave', function () { return rectangle.mouseUp(); });
 }
 watchLink.addEventListener("click", function (e) {
     e.preventDefault();
@@ -72,9 +76,8 @@ extractLink.addEventListener("click", function (e) {
     if (showRectangle) {
         captureLink.style.display = "flex";
         extractLink.style.display = "none";
-        processCapture();
-        showDiscussionSection();
         activeLink("discussion-section");
+        processCapture();
     }
 });
 captureLink.addEventListener("click", function (e) {
@@ -113,6 +116,9 @@ function showDiscussionSection() {
     videoSection.classList.add("hidden");
     discussionSection.classList.remove("hidden");
     discussionSection.classList.add("flex");
+    codeSection.style.display = "none";
+    divError.style.display = "none";
+    scanningIndicator.style.display = "none";
 }
 function activeLink(name) {
     var link = document.querySelector('a.active-link');
@@ -159,6 +165,10 @@ function getCapture() {
                 cutCtx.putImageData(imageData, 0, 0);
                 cutCanvas.toBlob(function (blob) {
                     if (!blob) {
+                        titleError.innerText = "Error while capturing image";
+                        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                        divError.style.display = "block";
+                        scanningIndicator.style.display = "none";
                         reject(new Error('Failed to create blob'));
                         return;
                     }
@@ -171,41 +181,69 @@ function getCapture() {
                             resolve(base64data);
                         }
                         else {
+                            titleError.innerText = "Error while capturing image";
+                            textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                            divError.style.display = "block";
+                            scanningIndicator.style.display = "none";
+                            reject(new Error('Failed to create blob'));
+                            return;
                         }
                     };
                 }, 'image/png');
             }
             else {
+                titleError.innerText = "Error while capturing image";
+                textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                divError.style.display = "block";
                 reject(new Error('Failed to create blob'));
             }
         }
         else {
+            titleError.innerText = "Error while capturing image";
+            textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+            divError.style.display = "block";
+            scanningIndicator.style.display = "none";
             reject(new Error('Failed to create blob'));
         }
     });
 }
 function uploadImage(base64Data) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, responseData, error_1;
+        var controller_1, signal, timeoutId, response, responseData, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     if (!base64Data) {
                         console.error('No image data provided');
+                        titleError.innerText = "Error while capturing image";
+                        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                        divError.style.display = "block";
+                        scanningIndicator.style.display = "none";
                         return [2 /*return*/, null];
                     }
                     _a.label = 1;
                 case 1:
                     _a.trys.push([1, 4, , 5]);
-                    return [4 /*yield*/, fetch('/save/image', {
+                    controller_1 = new AbortController();
+                    signal = controller_1.signal;
+                    timeoutId = setTimeout(function () {
+                        controller_1.abort();
+                        titleError.innerText = "Timeout exceeded";
+                        textError.innerText = "The request took too long and was canceled. Please try again later.";
+                        divError.style.display = "block";
+                        scanningIndicator.style.display = "none";
+                    }, 120000);
+                    return [4 /*yield*/, fetch('/scan/image', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify({ image_data: base64Data })
+                            body: JSON.stringify({ image_data: base64Data }),
+                            signal: signal
                         })];
                 case 2:
                     response = _a.sent();
+                    clearTimeout(timeoutId);
                     if (!response.ok) {
                         throw new Error('Failed to upload file');
                     }
@@ -215,6 +253,10 @@ function uploadImage(base64Data) {
                     return [2 /*return*/, responseData.code];
                 case 4:
                     error_1 = _a.sent();
+                    titleError.innerText = "Internal server error";
+                    textError.innerText = "An error occurred when you are trying \n                              to connect to the server. Please check your internet connection. \n                              If the issue persists, please try again later or \n                              contact the site administrator at kassadiallo@gmail.com.";
+                    divError.style.display = "block";
+                    scanningIndicator.style.display = "none";
                     console.error('Error uploading file:', error_1);
                     return [2 /*return*/, null];
                 case 5: return [2 /*return*/];
@@ -224,7 +266,7 @@ function uploadImage(base64Data) {
 }
 function processCapture() {
     return __awaiter(this, void 0, void 0, function () {
-        var base64Data, render, content, code, render_1, content_1, error_2;
+        var base64Data, code, formated_code, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -233,20 +275,20 @@ function processCapture() {
                 case 1:
                     base64Data = _a.sent();
                     if (!base64Data) return [3 /*break*/, 3];
-                    render = imageRender(base64Data);
-                    content = discussionSection.innerHTML + render;
-                    discussionSection.innerHTML = content;
                     showDiscussionSection();
                     activeLink("discussion-section");
-                    window.scrollTo(0, document.body.scrollHeight);
-                    discussionSection.scrollTop = discussionSection.scrollHeight;
+                    codeImage.src = base64Data;
+                    scanningIndicator.style.display = "block";
                     return [4 /*yield*/, uploadImage(base64Data)];
                 case 2:
                     code = _a.sent();
                     if (code) {
-                        render_1 = messageRender(code);
-                        content_1 = discussionSection.innerHTML + render_1;
-                        discussionSection.innerHTML = content_1;
+                        divError.style.display = "none";
+                        formated_code = code.replace(/^`|`$/g, '');
+                        codeText.textContent = formated_code;
+                        codeSection.style.display = "flex";
+                        divError.style.display = "none";
+                        scanningIndicator.style.display = "none";
                     }
                     else {
                         console.log('Failed to save image.');
@@ -264,10 +306,4 @@ function processCapture() {
             }
         });
     });
-}
-function imageRender(dataUrl) {
-    return " <div\n    class=\"flex w-full p-4  gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary\">\n    <span class=\"\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"41px\" viewBox=\"0 -960 960 960\" width=\"41px\"  class=\"icon-md\" role=\"img\" fill=\"#000000\"><path d=\"M480-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47ZM160-160v-112q0-34 17.5-62.5T224-378q62-31 126-46.5T480-440q66 0 130 15.5T736-378q29 15 46.5 43.5T800-272v112H160Zm80-80h480v-32q0-11-5.5-20T700-306q-54-27-109-40.5T480-360q-56 0-111 13.5T260-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T560-640q0-33-23.5-56.5T480-720q-33 0-56.5 23.5T400-640q0 33 23.5 56.5T480-560Zm0-80Zm0 400Z\"/></svg>\n    </span>\n    <div class=\"flex flex-col\">\n            <p class=\"px-5 py-3\">extract this code for me</p>\n            <p>\n                <img src=\"".concat(dataUrl, "\" class=\"object-contain rounded-2xl\" />\n            </p>\n    </div>\n</div>");
-}
-function messageRender(message) {
-    return "<div\n    class=\"w-full p-4 flex flex-row gap-1 shrink-0 bg-skin-secondary rounded-3xl border border-skin-primary\">\n    <span class=\"\">\n        <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"41px\" viewBox=\"0 -960 960 960\" width=\"41px\" fill=\"#5f6368\"><path d=\"M200-120q-33 0-56.5-23.5T120-200v-400q0-100 70-170t170-70h240q100 0 170 70t70 170v400q0 33-23.5 56.5T760-120H200Zm0-80h560v-400q0-66-47-113t-113-47H360q-66 0-113 47t-47 113v400Zm160-280q-33 0-56.5-23.5T280-560q0-33 23.5-56.5T360-640q33 0 56.5 23.5T440-560q0 33-23.5 56.5T360-480Zm240 0q-33 0-56.5-23.5T520-560q0-33 23.5-56.5T600-640q33 0 56.5 23.5T680-560q0 33-23.5 56.5T600-480ZM280-200v-80q0-33 23.5-56.5T360-360h240q33 0 56.5 23.5T680-280v80h-80v-80h-80v80h-80v-80h-80v80h-80Zm-80 0h560-560Z\"/></svg>\n    </span>\n    <span class=\"flex flex-col\">\n        <p>".concat(message, "</p>\n    </span>\n</div>");
 }
