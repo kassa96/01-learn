@@ -22,7 +22,13 @@ app.mount("/static",StaticFiles(directory="static"),name="static")
 templates=Jinja2Templates(directory="templates")
 output_dir = 'static/videos/'
 
-@app.get("/ask")
+@app.get("/")
+async def index(request:Request):
+    return templates.TemplateResponse(
+        request=request, name="home.html"
+    )
+
+@app.get("/tutorial")
 async def index(request:Request,video_id:str):
     if not video_id:
         return RedirectResponse(url="/")
@@ -31,26 +37,7 @@ async def index(request:Request,video_id:str):
     if os.path.exists(video_path):
         path= "/videos/"+video_id
         return templates.TemplateResponse(
-        request=request, name="ask.html", context={"path": path, "poster_url": ""})
-    else:
-        return RedirectResponse(url="/")
-@app.get("/")
-async def index(request:Request):
-    return templates.TemplateResponse(
-        request=request, name="home.html"
-    )
-
-
-@app.get("/tutorial")
-async def index(request:Request,video_id:str):
-    if not video_id:
-        return RedirectResponse(url="/")
-    output_dir = 'static/videos/'
-    file_name = video_id+".mp4"
-    video_path = os.path.join(output_dir, file_name);
-    if os.path.exists(video_path):
-        return templates.TemplateResponse(
-        request=request, name="tutorial.html", context={"video_path": video_path, "poster_url": ""})
+        request=request, name="tutorial.html", context={"path": path, "poster_url": ""})
     else:
         return RedirectResponse(url="/")
 
@@ -70,7 +57,6 @@ def validateTutorial(video_url: str):
             return {"status": "error", 
                 "message": error
                 }
-    print("video details::", video_details)
     file_name = video_details["id"]+".mp4"
     path_video = os.path.join(output_dir, file_name);
     if os.path.exists(path_video):
@@ -103,7 +89,6 @@ async def video_endpoint(video_id, range: str = Header(None)):
     start = int(start)
     end = int(end) if end else start + CHUNK_SIZE
 
-    # Assurez-vous que end ne dépasse pas la taille réelle du fichier
     end = min(end, video_path.stat().st_size)
 
     with open(video_path, "rb") as video:
@@ -115,8 +100,6 @@ async def video_endpoint(video_id, range: str = Header(None)):
             'Content-Range': f'bytes {start}-{end-1}/{filesize}',
             'Accept-Ranges': 'bytes'
         }
-
-        # Si start est égal ou supérieur à la taille du fichier, renvoyer une réponse vide avec le code 416 (Requested Range Not Satisfiable)
         if start >= video_path.stat().st_size:
             headers['Content-Range'] = f'bytes */{filesize}'
             return Response(status_code=416, headers=headers)

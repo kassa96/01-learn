@@ -3,6 +3,8 @@ export class Rectangle {
     static readonly DEFAULT_HEIGHT = 200;
     static readonly RADIUS = 8;
     static readonly LINE_WIDTH = 3;
+    static readonly MIN_WIDTH = 100
+    static readonly MIN_HEIGHT = 30
     top: number;
     left: number;
      width: number;
@@ -224,7 +226,7 @@ export class Rectangle {
       } else if (this.dragTL) {
         const newWidth = this.left + this.width - this.mouseX;
         const newHeight = this.top + this.height - this.mouseY;
-        if (newWidth > 150 && newHeight > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
           this.width = newWidth;
           this.height = newHeight;
           this.left = this.mouseX;
@@ -233,7 +235,7 @@ export class Rectangle {
       } else if (this.dragTR) {
         const newWidth = this.mouseX - this.left;
         const newHeight = this.top + this.height - this.mouseY;
-        if (newWidth > 150 && newHeight > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
           this.width = newWidth;
           this.height = newHeight;
           this.top = this.mouseY;
@@ -241,7 +243,7 @@ export class Rectangle {
       } else if (this.dragBL) {
         const newWidth = this.left + this.width - this.mouseX;
         const newHeight = this.mouseY - this.top;
-        if (newWidth > 150 && newHeight > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
           this.width = newWidth;
           this.height = newHeight;
           this.left = this.mouseX;
@@ -249,32 +251,32 @@ export class Rectangle {
       } else if (this.dragBR) {
         const newWidth = this.mouseX - this.left;
         const newHeight = this.mouseY - this.top;
-        if (newWidth > 150 && newHeight > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
           this.width = newWidth;
           this.height = newHeight;
         }
       }
       else if (this.leftSide) {
         const newWidth = this.left + this.width - this.mouseX;
-        if (newWidth > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH) {
           this.width = newWidth;
           this.left = this.mouseX;
         }
       }
       else if (this.rightSide){
         const newWidth = this.mouseX - this.left;
-        if (newWidth > 150) {
+        if (newWidth > Rectangle.MIN_WIDTH) {
           this.width = newWidth;
         }
       }else if (this.topSide){
         const newHeight = this.top + this.height - this.mouseY;
-        if (newHeight > 150) {
+        if (newHeight > Rectangle.MIN_HEIGHT) {
           this.height = newHeight;
           this.top = this.mouseY;
         }
       }else if (this.bottomSide){
         const newHeight = this.mouseY - this.top;
-        if (newHeight > 150) {
+        if (newHeight > Rectangle.MIN_HEIGHT) {
           this.height= newHeight;
         }
       }

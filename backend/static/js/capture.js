@@ -190,7 +190,7 @@ var Rectangle = /** @class */ (function () {
         else if (this.dragTL) {
             var newWidth = this.left + this.width - this.mouseX;
             var newHeight = this.top + this.height - this.mouseY;
-            if (newWidth > 150 && newHeight > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
                 this.width = newWidth;
                 this.height = newHeight;
                 this.left = this.mouseX;
@@ -200,7 +200,7 @@ var Rectangle = /** @class */ (function () {
         else if (this.dragTR) {
             var newWidth = this.mouseX - this.left;
             var newHeight = this.top + this.height - this.mouseY;
-            if (newWidth > 150 && newHeight > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
                 this.width = newWidth;
                 this.height = newHeight;
                 this.top = this.mouseY;
@@ -209,7 +209,7 @@ var Rectangle = /** @class */ (function () {
         else if (this.dragBL) {
             var newWidth = this.left + this.width - this.mouseX;
             var newHeight = this.mouseY - this.top;
-            if (newWidth > 150 && newHeight > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
                 this.width = newWidth;
                 this.height = newHeight;
                 this.left = this.mouseX;
@@ -218,34 +218,34 @@ var Rectangle = /** @class */ (function () {
         else if (this.dragBR) {
             var newWidth = this.mouseX - this.left;
             var newHeight = this.mouseY - this.top;
-            if (newWidth > 150 && newHeight > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH && newHeight > Rectangle.MIN_HEIGHT) {
                 this.width = newWidth;
                 this.height = newHeight;
             }
         }
         else if (this.leftSide) {
             var newWidth = this.left + this.width - this.mouseX;
-            if (newWidth > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH) {
                 this.width = newWidth;
                 this.left = this.mouseX;
             }
         }
         else if (this.rightSide) {
             var newWidth = this.mouseX - this.left;
-            if (newWidth > 150) {
+            if (newWidth > Rectangle.MIN_WIDTH) {
                 this.width = newWidth;
             }
         }
         else if (this.topSide) {
             var newHeight = this.top + this.height - this.mouseY;
-            if (newHeight > 150) {
+            if (newHeight > Rectangle.MIN_HEIGHT) {
                 this.height = newHeight;
                 this.top = this.mouseY;
             }
         }
         else if (this.bottomSide) {
             var newHeight = this.mouseY - this.top;
-            if (newHeight > 150) {
+            if (newHeight > Rectangle.MIN_HEIGHT) {
                 this.height = newHeight;
             }
         }
@@ -271,6 +271,8 @@ var Rectangle = /** @class */ (function () {
     Rectangle.DEFAULT_HEIGHT = 200;
     Rectangle.RADIUS = 8;
     Rectangle.LINE_WIDTH = 3;
+    Rectangle.MIN_WIDTH = 100;
+    Rectangle.MIN_HEIGHT = 30;
     return Rectangle;
 }());
 export { Rectangle };

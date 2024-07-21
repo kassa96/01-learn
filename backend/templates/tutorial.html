@@ -1,61 +1,121 @@
 {% extends "base.html" %}
-
 {% block content %}
-<main class="flex min-h-screen flex-col items-center p-5 gap-4">
-    <div class="w-full flex items-center justify-center">
-    <nav class="max-lg:hidden flex gap-7 bg-purple-500 dark:bg-slate-600 
-     px-10 py-3 shadow-xl rounded-3xl text-xl font-bold
-     ">
-       <a class="watch-link hover:text-slate-700 p-2 bg-slate-300 rounded-3xl" href="#">Watch the tutorial</a>
-       <a class="summarize-link hover:text-slate-300 p-2" href="#">Summarize the tutorial</a>
-       <a class="extract-link hover:text-slate-300 p-2" href="#">Extract code in the tutorial</a>
-       <a class="bot-link hover:text-slate-300 p-2" href="#">Ask question</a>
-     </nav>
-     <nav class="lg:hidden flex gap-6  bg-purple-500 dark:bg-slate-600 
-     px-10 py-3 shadow-xl rounded-3xl text-lg font-bold">
-       <a class="watch-link hover:text-slate-700 p-2 bg-slate-300 rounded-3xl" href="#">Watch</a>
-       <a class="summarize-link hover:text-slate-300 p-2" href="#">Summarize</a>
-       <a class="extract-link hover:text-slate-300 p-2" href="#">Code</a>
-       <a class="bot-link hover:text-slate-300 p-2" href="#">Question</a>
-     </nav>
+<nav class="fixed z-50 top-0 px-8 py-2 left-0 right-0 bg-skin-primary"> 
+    <div class="bg-skin-primary flex justify-center w-full py-3">
+        <div class="flex rounded-2xl justify-center items-center shadow overflow-hidden  p-2 gap-x-3">
+            <a href="#" id="watch-link" title="Watch tutorial" class="active-link">
+        <div class="flex items-center gap-x-2 ">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="m380-300 280-180-280-180v360ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z"/></svg>
+               <span id="watch-label">Watch</span>
+            
+        </div>
+      </a>
+            <a title="ask something AI" id="ask-link" href="#" class="link">
+        <div class="flex items-center gap-x-2 whitespace-nowrap">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M320-240 80-480l240-240 57 57-184 184 183 183-56 56Zm320 0-57-57 184-184-183-183 56-56 240 240-240 240Z"/></svg>    
+          <span id="code-label">See code</span>
+            
+        </div>
+      </a>
+      <a title="Extract code" id="capture-link" href="#" class="link">
+        <div class="flex items-center gap-x-2 whitespace-nowrap">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M200-680v-120q0-33 23.5-56.5T280-880h120v80H280v120h-80Zm80 600q-33 0-56.5-23.5T200-160v-120h80v120h120v80H280Zm400-600v-120H560v-80h120q33 0 56.5 23.5T760-800v120h-80ZM560-80v-80h120v-120h80v120q0 33-23.5 56.5T680-80H560Z"/></svg>
+          <span id="capture-label">Take capture</span>
+            
+        </div>
+      </a>
+      <a title="Extract code" id="extract-link" href="#" class="link hidden">
+        <div class="flex items-center gap-x-2 whitespace-nowrap">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-120q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-480q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-840v80q-117 0-198.5 81.5T200-480q0 117 81.5 198.5T480-200v80Zm160-160-56-57 103-103H360v-80h327L584-624l56-56 200 200-200 200Z"/></svg>
+            <span id="extraxt-label">Extract code</span>
+            
+        </div>
+      </a>
+          </div>
+        </div>
+</nav>
+<main id="main-content" class="flex flex-1 flex-col  items-center h-full mt-28">
+<section id="video-panel" class="flex max-sm:w-full md:w-8/12 justify-center items-center">
+    <div class="w-full flex-col justify-center items-center">
+        <div style="position:relative" class ="shadow-2xl rounded-md " >
+            <video id="tuto" src="{{path }}" type="video/mp4" class="w-full object-cover" poster="{{ poster_url }}"
+            width="auto" height="auto" autoplay controls>
+            Your browser does not support HTML5 video playback.
+          </video>
+        <canvas id="canvas" 
+                style="display:none; position:absolute;left: 0px;top: 0px;width: 100%;height: 100%;">
+       </canvas>
+        </div>
+        <img class="hidden border-2 border-green-800" id="capturedImage" src="" alt="Captured Image">
+        </div>
+</section>
+<div id="discussion-panel" class="hidden flex-col justify-center items-center">
+  <div class="flex flex-col ">
+    <span id="title-scan" class="text-xl md:text-3xl font-extrabold bg-clip-text p-4 md:p-6 text-center text-balance text-transparent bg-gradient-to-r from-pink-500 to-violet-500">
+      SCREENSHOT TO CODE
+</span>
+<span id="alert-scan" class="p-6 text-md text-black">There are no screenshot converted to code</span>
+  </div>
+<div class="flex justify-center gap-4 flex-wrap">
+  <div class="">
+    <img id="code-image" src="/static/captures/image1.png" class="object-contain rounded-2xl bg-skin-primary shadow-sm"/>
+  </div>
+  <div id="code-section" class="hidden flex-col min-w-80 rounded-2xl bg-black items-center shadow overflow-hidden">
+    <div class="flex w-full bg-zinc-800 p-4 px-4 py-2 text-md font-sans shadow-sm text-zinc-500 justify-between rounded-t-md">
+      <span>Javascript</span>
+      <a href="#" id="copy-link" class="flex gap-2 hover:text-zinc-400" title="copy the extracted snippet code">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" class="icon-sm"><path fill="currentColor" fill-rule="evenodd" d="M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1zM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1z" clip-rule="evenodd"></path></svg>
+        <span>Copy the code</span>
+      </a>
     </div>
-    <div id = "messagerie" class="hidden p-8 min-h-screen justify-end  flex-col items-center bg-zinc-400 shadow-md">
-      <div class="flex flex-col justify-center">
-        <h1 class="text-xl font-bold ">How can I help you today?</h1>
-      </div>
-      <div class=" flex-col">
-       <div class="flex">
-        <a href="#" class="">
-          What is this tutorial about?
-        </a>
-        <a href="#" class="">
-          Generate a transcript of this tutorial
-        </a>
-       </div>
-       <div class="flex">
-        <a href="#" class="">
-          What are the key points explained in this tutorial?
-        </a>
-        <a href="#" class="">
-          What are the resources for this tutorial?
-        </a>
-       </div>
-      </div>
+    <div class="px-4 py-6 bg-zinc-950">
+      <pre><code class="language-javascript1 text-white whitespace-pre-line overflow-x-auto max-w-xs" id="code-text">    
+        function isPast(date) {
+            if (!isValid(date)) {
+                return false;
+            }
+            if (new Date(date).getTime() < Date.now()) {
+                return true;
+            }
+            return false;
+        }
+          </code></pre>
     </div>
-     <div class="flex w-full flex-col justify-center items-center">
-     <div style="position:relative" class ="shadow-2xl rounded-md max-sm:w-full md:w-8/12 " >
-     <video id="tuto" class="w-full object-cover" poster="{{ poster_url }}"
-     width="auto" height="auto" controls>
-      <source src="{{ video_path }}" type="video/mp4">
-      Your browser does not support HTML5 video playback.
-    </video>
-     <canvas id="canvas" 
-             style="display:none; position:absolute;left: 0px;top: 0px;width: 100%;height: 100%;">
-    </canvas>
-     </div>
-     <img class="hidden border-2 border-green-800" id="capturedImage" src="" alt="Captured Image">
-     </div>
-    </main>
-    <script type="module" src="/static/js/tutorial.js"></script>
-
-    {% endblock %}
+  </div>
+</div>
+<div id="typing-indicator" class="flex flex-wrap p-4">
+  <span class="text-md  font-semibold">Please wait, scanning in progress. </span>
+  <span class="text-md  font-semibold">This may take a few seconds</span>
+ <div class= "flex w-full mt-4 justify-center items-center">
+ <div class="dot bg-purple-500"></div>
+ <div class="dot bg-purple-500"></div>
+ <div class="dot bg-purple-500"></div>
+ </div>
+</div>
+<div id="panel-error" class="p-4 ">
+  <div class="relative bg-red-100 border-2 border-red-500 shadow-md rounded-lg p-4">
+      <div class="flex flex-col gap-2">
+        <div class="text-lg font-bold"id="title-error">
+         
+        </div>
+        <div id="text-error" class="mt-2 text-md text-gray-700">
+          
+        </div>
+      </div>
+      </div>
+  </div>
+</div>
+</main>
+<script type="module" src="/static/js/tutorial.js"></script>
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.7.0/highlight.min.js"></script>
+<script src="https://unpkg.com/@highlightjs/cdn-assets@11.7.0/languages/javascript.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block);
+  });
+});
+</script>
+{% endblock %}
