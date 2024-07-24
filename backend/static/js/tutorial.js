@@ -46,23 +46,24 @@ var canvas = document.getElementById("canvas");
 var textError = document.getElementById("text-error");
 var titleError = document.getElementById("title-error");
 var divError = document.getElementById("panel-error");
-var codeSection = document.getElementById('code-section');
+var codeSection = document.getElementById("code-section");
 var codeText = document.getElementById("code-text");
 var codeImage = document.getElementById("code-image");
 var scanningIndicator = document.getElementById("typing-indicator");
 var alertScan = document.getElementById("alert-scan");
 var titleScan = document.getElementById("title-scan");
 var copyLink = document.getElementById("copy-link");
+var langageName = document.getElementById("langage-name");
 var rectangle = null;
 var showRectangle = false;
 var is_scanning = false;
 var scanning_success = false;
 window.addEventListener("resize", repositionCanvas);
 if (video !== null) {
-    canvas.addEventListener('mousedown', function (e) { return rectangle.mouseDown(e); });
-    canvas.addEventListener('mousemove', function (e) { return rectangle.mouseMove(e); });
-    canvas.addEventListener('mouseup', function () { return rectangle.mouseUp(); });
-    canvas.addEventListener('mouseleave', function () { return rectangle.mouseUp(); });
+    canvas.addEventListener("mousedown", function (e) { return rectangle.mouseDown(e); });
+    canvas.addEventListener("mousemove", function (e) { return rectangle.mouseMove(e); });
+    canvas.addEventListener("mouseup", function () { return rectangle.mouseUp(); });
+    canvas.addEventListener("mouseleave", function () { return rectangle.mouseUp(); });
 }
 watchLink.addEventListener("click", function (e) {
     e.preventDefault();
@@ -110,7 +111,7 @@ askLink.addEventListener("click", function (e) {
         video.pause();
     }
 });
-copyLink.addEventListener('click', function () {
+copyLink.addEventListener("click", function () {
     var textToCopy = codeText.textContent;
     copyToClipboard(textToCopy);
     copyLink.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"20px\" viewBox=\"0 -960 960 960\" width=\"20px\" fill=\"#5f6368\"><path d=\"M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z\"/></svg>\n  <span>Copied</span>";
@@ -129,7 +130,9 @@ function showDiscussionSection() {
     videoSection.classList.add("hidden");
     discussionSection.classList.remove("hidden");
     discussionSection.classList.add("flex");
-    codeSection.style.display = "none";
+    if (scanning_success) {
+        codeSection.style.display = "flex";
+    }
     divError.style.display = "none";
     if (scanning_success || is_scanning)
         codeImage.style.display = "block";
@@ -152,9 +155,9 @@ function showDiscussionSection() {
     }
 }
 function activeLink(name) {
-    var link = document.querySelector('a.active-link');
+    var link = document.querySelector("a.active-link");
     if (link) {
-        link.classList.remove('active-link');
+        link.classList.remove("active-link");
     }
     if (name == "watch-section") {
         watchLink.classList.add("active-link");
@@ -181,26 +184,27 @@ function repositionCanvas() {
 function getCapture() {
     return new Promise(function (resolve, reject) {
         if (rectangle != null && video != null) {
-            var tempCanvas = document.createElement('canvas');
+            var tempCanvas = document.createElement("canvas");
             var _a = video.getBoundingClientRect(), width = _a.width, height = _a.height;
             tempCanvas.width = width;
             tempCanvas.height = height;
-            var tempCtx = tempCanvas.getContext('2d');
+            var tempCtx = tempCanvas.getContext("2d");
             if (tempCtx) {
                 tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
                 var imageData = tempCtx.getImageData(rectangle.left, rectangle.top, rectangle.width, rectangle.height);
-                var cutCanvas = document.createElement('canvas');
-                var cutCtx = cutCanvas.getContext('2d');
+                var cutCanvas = document.createElement("canvas");
+                var cutCtx = cutCanvas.getContext("2d");
                 cutCanvas.width = rectangle.width;
                 cutCanvas.height = rectangle.height;
                 cutCtx.putImageData(imageData, 0, 0);
                 cutCanvas.toBlob(function (blob) {
                     if (!blob) {
                         titleError.innerText = "Error while capturing image";
-                        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                        textError.innerText =
+                            "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
                         divError.style.display = "block";
                         scanningIndicator.style.display = "none";
-                        reject(new Error('Failed to create blob'));
+                        reject(new Error("Failed to create blob"));
                         return;
                     }
                     var reader = new FileReader();
@@ -213,28 +217,31 @@ function getCapture() {
                         }
                         else {
                             titleError.innerText = "Error while capturing image";
-                            textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                            textError.innerText =
+                                "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
                             divError.style.display = "block";
                             scanningIndicator.style.display = "none";
-                            reject(new Error('Failed to create blob'));
+                            reject(new Error("Failed to create blob"));
                             return;
                         }
                     };
-                }, 'image/png');
+                }, "image/png");
             }
             else {
                 titleError.innerText = "Error while capturing image";
-                textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                textError.innerText =
+                    "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
                 divError.style.display = "block";
-                reject(new Error('Failed to create blob'));
+                reject(new Error("Failed to create blob"));
             }
         }
         else {
             titleError.innerText = "Error while capturing image";
-            textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+            textError.innerText =
+                "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
             divError.style.display = "block";
             scanningIndicator.style.display = "none";
-            reject(new Error('Failed to create blob'));
+            reject(new Error("Failed to create blob"));
         }
     });
 }
@@ -245,9 +252,10 @@ function uploadImage(base64Data) {
             switch (_a.label) {
                 case 0:
                     if (!base64Data) {
-                        console.error('No image data provided');
+                        console.error("No image data provided");
                         titleError.innerText = "Error while capturing image";
-                        textError.innerText = "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
+                        textError.innerText =
+                            "An unexpected error occurred during the image capture process. Please refresh the page and try again.";
                         divError.style.display = "block";
                         scanningIndicator.style.display = "none";
                         return [2 /*return*/, null];
@@ -260,23 +268,24 @@ function uploadImage(base64Data) {
                     timeoutId = setTimeout(function () {
                         controller_1.abort();
                         titleError.innerText = "Timeout exceeded";
-                        textError.innerText = "The request took too long and was canceled. Please try again later.";
+                        textError.innerText =
+                            "The request took too long and was canceled. Please try again later.";
                         divError.style.display = "block";
                         scanningIndicator.style.display = "none";
                     }, 120000);
-                    return [4 /*yield*/, fetch('/scan/image', {
-                            method: 'POST',
+                    return [4 /*yield*/, fetch("/scan/image", {
+                            method: "POST",
                             headers: {
-                                'Content-Type': 'application/json',
+                                "Content-Type": "application/json",
                             },
                             body: JSON.stringify({ image_data: base64Data }),
-                            signal: signal
+                            signal: signal,
                         })];
                 case 2:
                     response = _a.sent();
                     clearTimeout(timeoutId);
                     if (!response.ok) {
-                        throw new Error('Failed to upload file');
+                        throw new Error("Failed to upload file");
                     }
                     return [4 /*yield*/, response.json()];
                 case 3:
@@ -288,7 +297,7 @@ function uploadImage(base64Data) {
                     textError.innerText = "An error occurred when you are trying \n                              to connect to the server. Please check your internet connection. \n                              If the issue persists, please try again later or \n                              contact the site administrator at kassadiallo@gmail.com.";
                     divError.style.display = "block";
                     scanningIndicator.style.display = "none";
-                    console.error('Error uploading file:', error_1);
+                    console.error("Error uploading file:", error_1);
                     return [2 /*return*/, null];
                 case 5: return [2 /*return*/];
             }
@@ -297,7 +306,7 @@ function uploadImage(base64Data) {
 }
 function processCapture() {
     return __awaiter(this, void 0, void 0, function () {
-        var base64Data, code, error_2;
+        var base64Data, rawCode, langage_name, formatedCode, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -309,31 +318,46 @@ function processCapture() {
                     is_scanning = true;
                     showDiscussionSection();
                     activeLink("discussion-section");
+                    codeSection.style.display = "none";
                     codeImage.src = base64Data;
                     return [4 /*yield*/, uploadImage(base64Data)];
                 case 2:
-                    code = _a.sent();
-                    if (code) {
-                        divError.style.display = "none";
-                        codeText.textContent = code;
-                        codeSection.style.display = "flex";
-                        divError.style.display = "none";
+                    rawCode = _a.sent();
+                    if (!rawCode) {
+                        titleError.innerText = "error when extracting code";
+                        textError.innerText = "An error occurred while scanning the image to extract the code. Please try again.";
+                        divError.style.display = "block";
                         scanningIndicator.style.display = "none";
-                        scanning_success = true;
                         is_scanning = false;
+                        return [2 /*return*/];
                     }
-                    else {
-                        console.log('Failed to save image.');
+                    rawCode = rawCode.replace(/\/n/g, "").trim();
+                    if (rawCode === "<no__code/>") {
+                        titleError.innerText = "no code found";
+                        textError.innerText = "No code was found during the document scan.";
+                        divError.style.display = "block";
+                        scanningIndicator.style.display = "none";
                         is_scanning = false;
+                        return [2 /*return*/];
                     }
+                    langage_name = getLanguageName(rawCode);
+                    langageName.innerText = langage_name;
+                    formatedCode = getCode(rawCode);
+                    divError.style.display = "none";
+                    codeText.textContent = formatedCode;
+                    codeSection.style.display = "flex";
+                    divError.style.display = "none";
+                    scanningIndicator.style.display = "none";
+                    scanning_success = true;
+                    is_scanning = false;
                     return [3 /*break*/, 4];
                 case 3:
-                    console.log('Failed to capture image.');
+                    console.log("Failed to capture image.");
                     _a.label = 4;
                 case 4: return [3 /*break*/, 6];
                 case 5:
                     error_2 = _a.sent();
-                    console.error('Error processing capture:', error_2);
+                    console.error("Error processing capture:", error_2);
                     is_scanning = false;
                     return [3 /*break*/, 6];
                 case 6: return [2 /*return*/];
@@ -349,12 +373,13 @@ function copyToClipboard(text) {
         fallbackCopyTextToClipboard(text);
         return;
     }
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+        .writeText(text)
         .then(function () {
-        console.log('Text copied to clipboard');
+        console.log("Text copied to clipboard");
     })
         .catch(function (err) {
-        console.error('Error in copying text: ', err);
+        console.error("Error in copying text: ", err);
     });
 }
 function fallbackCopyTextToClipboard(text) {
@@ -367,12 +392,32 @@ function fallbackCopyTextToClipboard(text) {
     textArea.focus();
     textArea.select();
     try {
-        var successful = document.execCommand('copy');
-        var msg = successful ? 'successful' : 'unsuccessful';
-        console.log('Fallback: Text copy ' + msg);
+        var successful = document.execCommand("copy");
+        var msg = successful ? "successful" : "unsuccessful";
+        console.log("Fallback: Text copy " + msg);
     }
     catch (err) {
-        console.error('Fallback: Unable to copy text', err);
+        console.error("Fallback: Unable to copy text", err);
     }
     document.body.removeChild(textArea);
+}
+function getLanguageName(texte) {
+    var regex = new RegExp('<lg__code>(.*?)<\/lg__code>', 's');
+    var matches = texte.match(regex);
+    if (matches && matches.length > 1) {
+        return matches[1];
+    }
+    else {
+        return "";
+    }
+}
+function getCode(texte) {
+    var regex = new RegExp('<txt__code>(.*?)<\/txt__code>', 's');
+    var matches = texte.match(regex);
+    if (matches && matches.length > 1) {
+        return matches[1];
+    }
+    else {
+        return texte;
+    }
 }

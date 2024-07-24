@@ -36,8 +36,9 @@ async def index(request:Request,video_id:str):
     video_path = os.path.join(output_dir, file_name);
     if os.path.exists(video_path):
         path= "/videos/"+video_id
+        poster_url = f"https://i.ytimg.com/vi/{video_id}/hqdefault.jpg"
         return templates.TemplateResponse(
-        request=request, name="tutorial.html", context={"path": path, "poster_url": ""})
+        request=request, name="tutorial.html", context={"path": path, "poster_url": poster_url})
     else:
         return RedirectResponse(url="/")
 
@@ -45,15 +46,12 @@ async def index(request:Request,video_id:str):
 def validateTutorial(video_url: str):
     api_key = os.getenv('YOUTUBE_API_KEY')
     video_details = {}
-    if api_key:
-        video_details, error = get_video_details_from_api(api_key, video_url)
-    else:
-        video_details, error = get_video_details(video_url)
+    video_details, error = get_video_details_from_api(api_key, video_url)
     if error is not None:
-        video_details, error = get_video_details_from_api(api_key, video_url)
         print("error from api:", error)
-        if error is not None:
-            print("error from pytube:", error)
+        video_details, error_pytube = get_video_details(video_url)
+    if error_pytube is not None:
+            print("error from pytube:", error_pytube)
             return {"status": "error", 
                 "message": error
                 }
@@ -71,7 +69,16 @@ async def websocket_download_video(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             url = data.strip()
-            await websocket.send_json({"message": "starting_download"})
+            video_id = tutorial_exists(url)
+            if video_id is None:
+              await websocket.send_json({"status": "error", "type": "tutorial_not_available"})  
+              return
+            file_name = video_id+".mp4"
+            path_video = os.path.join(output_dir, file_name);
+            if os.path.exists(path_video):
+                await websocket.send_json( {"status":"success", "type": "video_downloaded", "video_id":video_id})
+                return 
+            await websocket.send_json( {"status":"success", "type": "starting_download"})
             asyncio.create_task(download_video(url,output_dir, websocket))
     except WebSocketDisconnect:
         pass

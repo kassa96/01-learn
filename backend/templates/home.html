@@ -11,13 +11,13 @@
 </span>
 </div>
       <div class="w-full">
-      <input type="text" id="tutorial_url" placeholder="Past the link of a youtube video tutorial to try to practice"
+      <input type="text" id="tutorial_url" title="Paste the YouTube video URL and press Enter." placeholder="Past the link of a youtube video tutorial to try to practice"
       class="w-full p-4 border-2 outline-none border-gray-300 rounded-3xl
       focus:border-purple-500 focus:ring-2 focus:ring-purple-500"></input>
       </div>
       <div id="loading-indicator"class="hidden flex-col justify-center items-center">
         <div>
-          <p class="p-2 text-lg font-semibold">Video loading</p>
+          <p class="p-2 text-lg font-semibold">Tutorial Info Loading...</p>
         </div>
         <div class="border-t-4 border-gray-500 rounded-full animate-spin h-12 w-12"></div>
         
@@ -37,10 +37,9 @@
             </button>
             <div class="flex flex-col gap-2">
               <div class="text-lg font-bold"id="title-error">
-                Provide your YouTube access key to use the YouTube API.
+                
               </div>
               <div id="text-error" class="mt-2 text-md text-gray-700">
-                "erreur"
               </div>
               
             </div>
@@ -111,6 +110,11 @@
             <span id="video-like" class="text-lg font-bold text-violet-500">2</span> 
             <svg class="fill-violet-500" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l120-280v-80H480l54-220-174 174v406Zm0-406v406-406Zm-80-34v80H160v360h120v80H80v-520h200Z"/></svg>
         </div>
+        </div>
+        <div class="w-full flex justify-center">
+          <button id="download-btn"class="bg-violet-500 hover:bg-violet-900 text-white font-bold py-2 px-4 rounded">
+            Download tutorial
+          </button>
         </div>
       </div> 
     </div>

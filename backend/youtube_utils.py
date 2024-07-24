@@ -3,7 +3,7 @@ import json
 import os
 import re
 from fastapi import WebSocket
-from pytube import YouTube
+from pytubefix import YouTube
 from requests import HTTPError
 from youtube_transcript_api import YouTubeTranscriptApi
 from pytube.exceptions import *
@@ -141,87 +141,32 @@ def get_video_details_from_api(api_key, video_url):
     except Exception as e:
         return None, f"Unexpected Error: {str(e)}"
 
+def tutorial_exists(url):
+    try:
+        yt = YouTube(url)
+        return yt.video_id
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return None
+
 async def download_video(url: str, output_dir: str, websocket: WebSocket):
     try:
         yt = YouTube(url)
         stream = yt.streams.get_highest_resolution()
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        stream.download(output_dir)
-        
-        # Obtenir le nom de fichier par défaut
-        default_filename = stream.default_filename
-        
-        # Obtenir l'ID de la vidéo
-        video_id = yt.video_id
-        
-        # Renommer le fichier téléchargé avec l'ID de la vidéo
-        extension = os.path.splitext(default_filename)[1]
-        new_filename = f"{video_id}{extension}"
-        os.rename(os.path.join(output_dir, default_filename), os.path.join(output_dir, new_filename))
-        await websocket.send_json({"message": "download_successful", "filename": new_filename})
-    except Exception as e:
-        print("error:", e)
-        await websocket.send_json({"status": "error", "message": "Downloading is instanely interruped: try another time or video"})
-    finally:
-        await websocket.close()
-
-
-async def download_video1(url: str, output_dir: str, websocket: WebSocket):
-    try:
-        print("url----------:", url)
-        yt = YouTube(url)
-        stream = yt.streams.get_highest_resolution()
-        if not stream:
-            raise ValueError("Video not available")
-        
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        
-        stream.download(output_dir)
+        stream.download(output_dir)        
         default_filename = stream.default_filename
         video_id = yt.video_id
         extension = os.path.splitext(default_filename)[1]
         new_filename = f"{video_id}{extension}"
         os.rename(os.path.join(output_dir, default_filename), os.path.join(output_dir, new_filename))
-        
-        await websocket.send_json({"message": "download_successful", "filename": new_filename})
-        
-    except VideoUnavailable as e:
-        print("error2:", e)
-        await websocket.send_json({"status": "error", "message": "The requested video is unavailable."})
-
-    except RegexMatchError as e:
-        print("error1:", e)
-        await websocket.send_json({"status": "error", "message": "The provided URL is not valid."})
-            
-    except LiveStreamError as e:
-        print("error3:", e)
-        await websocket.send_json({"status": "error", "message": "Cannot download live streams."})
-        
-    except AgeRestrictedError as e:
-        print("error4:", e)
-        await websocket.send_json({"status": "error", "message": "The video is age-restricted."})
-        
-    except VideoRegionBlocked as e:
-        print("error5:", e)
-        await websocket.send_json({"status": "error", "message": "The video is blocked in your region."})
-        
-    except PytubeError as e:
-        print("error6:", e)
-        await websocket.send_json({"status": "error", "message": "Error downloading video."})
-        
-    except ValueError as e:
-        print("error7:", e)
-        await websocket.send_json({"status": "error", "message": str(e)})
-        
+        await websocket.send_json({"status": "success", "type": "download_successful", "video_id":video_id})
     except Exception as e:
-        print("error8:", e)
-        await websocket.send_json({"status": "error", "message": "Unexpected error occurred."})
-        
+        print("error:", str(e))
+        await websocket.send_json({"status": "error", "type": "interruped_downloading_video"})
     finally:
         await websocket.close()
-
 
 
 def convert_iso_duration(duration):
@@ -257,30 +202,22 @@ def capture_frame(video_path, output_dir, frame_time, image_width, image_height,
     ret, frame = cap.read()
     
     if ret:
-        # Redimensionner l'image capturée à la taille spécifiée
-        frame = cv2.resize(frame, (image_width, image_height))
-        
-        # Découper la partie rectangulaire spécifiée
-        cropped_frame = frame[rect_y:rect_y+rect_height, rect_x:rect_x+rect_width]
-        
-        # Générer un nom de fichier unique pour l'image
+        frame = cv2.resize(frame, (image_width, image_height))        
+        cropped_frame = frame[rect_y:rect_y+rect_height, rect_x:rect_x+rect_width]        
         timestamp = int(time.time() * 1000)
         random_str = str(uuid.uuid4().hex[:4])
-        filename = f"image_{timestamp}_{random_str}.png"
-        
-        # Chemin complet pour enregistrer l'image découpée
-        output_path = os.path.join(output_dir, filename)
-        
-        # Enregistrer l'image découpée
+        filename = f"image_{timestamp}_{random_str}.png"        
+        output_path = os.path.join(output_dir, filename)        
         cv2.imwrite(output_path, cropped_frame)
+        cap.release()
+        cv2.destroyAllWindows()
         return output_path
     else:
         print("Error: Impossible to capture image from video.")
-        return ""
+        cap.release()
+        cv2.destroyAllWindows()
+        return ""    
     
-    cap.release()
-    cv2.destroyAllWindows()
-
 
 
 

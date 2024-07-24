@@ -35,33 +35,53 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var closeBtn = document.getElementById('close-btn');
-var panelError = document.getElementById('panel-error');
-var videoUrlInput = document.getElementById('tutorial_url');
+var closeBtn = document.getElementById("close-btn");
+var panelError = document.getElementById("panel-error");
+var videoUrlInput = document.getElementById("tutorial_url");
 var divWarning = document.getElementById("panel-warning");
 var divError = document.getElementById("panel-error");
 var textError = document.getElementById("text-error");
 var titleError = document.getElementById("title-error");
 var loadingIndicator = document.getElementById("loading-indicator");
-var progressBar = document.getElementById('progress_download');
-var progressBarContainer = document.getElementById('progress-bar-container');
-var progressText = document.getElementById('progress_text');
+var progressBar = document.getElementById("progress_download");
+var progressBarContainer = document.getElementById("progress-bar-container");
+var progressText = document.getElementById("progress_text");
+var infosElement = document.getElementById("video-info");
+var btnDownload = document.getElementById("download-btn");
 var isLoading = false;
 var info_video = null;
-videoUrlInput.addEventListener("keypress", validateVideoUrl);
-closeBtn.addEventListener('click', function (event) {
-    panelError.style.display = 'none';
+var videoUrl = null;
+videoUrlInput.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+        var url = videoUrlInput.value.trim();
+        if (url != "")
+            validateVideoUrl(url);
+    }
 });
-function validateVideoUrl(event) {
+videoUrlInput.addEventListener("paste", function (event) {
+    var clipboardData = event.clipboardData || window.clipboardData;
+    if (!clipboardData)
+        return;
+    if (clipboardData instanceof DataTransfer) {
+        var url = clipboardData.getData("text").trim();
+        if (url != "")
+            validateVideoUrl(url);
+    }
+});
+btnDownload.addEventListener("click", downloadTutorial);
+closeBtn.addEventListener("click", function (event) {
+    panelError.style.display = "none";
+});
+function validateVideoUrl(url) {
     return __awaiter(this, void 0, void 0, function () {
-        var videoUrl, response, data, error_1;
+        var response, data, error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!(event.key === 'Enter')) return [3 /*break*/, 5];
                     divError.style.display = "none";
                     divWarning.style.display = "none";
-                    videoUrl = videoUrlInput.value.trim();
+                    videoUrl = url.trim();
+                    infosElement.style.display = "none";
                     if (!videoUrl) {
                         return [2 /*return*/];
                     }
@@ -96,19 +116,17 @@ function validateVideoUrl(event) {
                         divError.style.display = "none";
                         divWarning.style.display = "none";
                         loadingIndicator.style.display = "none";
-                        videoUrlInput.disabled = true;
-                        videoUrlInput.title = "the video is downloading...";
-                        videoUrlInput.classList.add("disabled-input");
                         info_video = data.data;
                         console.log(info_video);
                         setVideoInfos(info_video.logo, info_video.title, info_video.duration, info_video.viewCount, info_video.likeCount);
-                        launchDownloadingVideo(videoUrl);
+                        btnDownload.style.display = "block";
                     }
                     return [3 /*break*/, 5];
                 case 4:
                     error_1 = _a.sent();
                     titleError.innerText = "error connecting to the server";
-                    textError.innerText = "An error occurred when you are trying to connect to the server. Please check your internet connection. If the issue persists, please try again later or contact the site administrator at kassadiallo@gmail.com.";
+                    textError.innerText =
+                        "An error occurred when you are trying to connect to the server. Please check your internet connection. If the issue persists, please try again later or contact the site administrator at kassadiallo@gmail.com.";
                     loadingIndicator.style.display = "none";
                     divWarning.style.display = "none";
                     videoUrlInput.disabled = false;
@@ -119,27 +137,65 @@ function validateVideoUrl(event) {
         });
     });
 }
+function downloadTutorial() {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            videoUrlInput.disabled = true;
+            videoUrlInput.title = "the video is downloading...";
+            videoUrlInput.classList.add("disabled-input");
+            btnDownload.style.display = "none";
+            launchDownloadingVideo(videoUrl);
+            return [2 /*return*/];
+        });
+    });
+}
 function launchDownloadingVideo(videoUrl) {
+    if (videoUrl === null)
+        return;
     var socket = new WebSocket("ws://localhost:8000/ws/download/");
     socket.onopen = function (event) {
         console.log("WebSocket connected.");
+        videoUrl = videoUrl;
         socket.send(videoUrl);
     };
     socket.onmessage = function (event) {
         var eventData = JSON.parse(event.data);
         console.log("--------data recieved:", eventData);
-        if (eventData.message === "starting_download") {
+        if (eventData.status === "success" &&
+            eventData.type === "starting_download") {
             loadingIndicator.style.display = "none";
             isLoading = true;
             videoUrlInput.disabled = true;
             videoUrlInput.classList.add("disabled-input");
             simulateDownload(info_video.duration);
         }
-        else if (eventData.message === "download_successful") {
+        else if ((eventData.status === "success" &&
+            eventData.type === "download_successful") ||
+            eventData.type === "video_downloaded") {
             updateProgressBar(100);
             console.log(eventData);
             isLoading = false;
-            window.location.href = "/tutorial?video_id=".concat(info_video.id);
+            window.location.href = "/tutorial?video_id=".concat(eventData.video_id);
+        }
+        else if (eventData.status === "error" &&
+            eventData.type === "tutorial_not_available") {
+            titleError.innerText = "Tutorial not found";
+            textError.innerText =
+                "Your video is not available to download. Please wait and try later or download the video using tierce service and upload it.";
+            loadingIndicator.style.display = "none";
+            divWarning.style.display = "none";
+            videoUrlInput.disabled = false;
+            videoUrlInput.classList.remove("disabled-input");
+        }
+        else if (eventData.status === "error" &&
+            eventData.type === "interruped_downloading_video") {
+            titleError.innerText = "Downloading video interruped";
+            textError.innerText =
+                "The video download was instantly interrupted. Please try again or use an external service to download the video and then upload it.";
+            loadingIndicator.style.display = "none";
+            divWarning.style.display = "none";
+            videoUrlInput.disabled = false;
+            videoUrlInput.classList.remove("disabled-input");
         }
     };
     socket.onclose = function (event) {
@@ -151,42 +207,38 @@ function launchDownloadingVideo(videoUrl) {
     };
     socket.onerror = function (error) {
         console.error("WebSocket error:", error);
-        textError.innerText = "error downloading video. the video must be public acess.";
+        textError.innerText =
+            "error downloading video. the video must be public acess.";
         divError.style.display = "block";
         loadingIndicator.style.display = "none";
         videoUrlInput.disabled = false;
         videoUrlInput.classList.remove("disabled-input");
     };
 }
-function getYouTubeVideoId(url) {
-    var regex = /[?&]v=([^&]+)/;
-    var match = url.match(regex);
-    return match && match[1] ? match[1] : null;
-}
 function simulateDownload(videoDuration) {
-    var _a = videoDuration.split(':').map(Number), hours = _a[0], minutes = _a[1], seconds = _a[2];
+    var _a = videoDuration.split(":").map(Number), hours = _a[0], minutes = _a[1], seconds = _a[2];
     var totalSeconds = hours * 3600 + minutes * 60 + seconds;
     var interval = 1000;
     var increment = 5;
-    if (totalSeconds > (2 * 3600)) {
+    if (totalSeconds > 2 * 3600) {
         increment = 2;
     }
-    else if (totalSeconds > (1 * 3600)) {
+    else if (totalSeconds > 1 * 3600) {
         increment = 3;
     }
-    else if (totalSeconds > (30 * 60)) {
+    else if (totalSeconds > 30 * 60) {
         increment = 5;
     }
-    else if (totalSeconds > (20 * 60)) {
+    else if (totalSeconds > 20 * 60) {
         increment = 6;
     }
-    else if (totalSeconds > (10 * 60)) {
+    else if (totalSeconds > 10 * 60) {
         increment = 7;
     }
-    else if (totalSeconds > (5 * 60)) {
+    else if (totalSeconds > 5 * 60) {
         increment = 8;
     }
-    else if (totalSeconds > (1 * 60)) {
+    else if (totalSeconds > 1 * 60) {
         increment = 9;
     }
     else {
@@ -210,18 +262,17 @@ function simulateDownload(videoDuration) {
     }
 }
 function updateProgressBar(percent) {
-    progressBar.style.width = percent + '%';
-    progressText.textContent = percent + '%';
+    progressBar.style.width = percent + "%";
+    progressText.textContent = percent + "%";
 }
 function setVideoInfos(photoUrl, title, duration, nbreView, nbreLike) {
-    var imageCouverture = document.getElementById('video-photo');
+    var imageCouverture = document.getElementById("video-photo");
     var titleElement = document.getElementById("video-title");
     var likeElement = document.getElementById("video-like");
     var viewElement = document.getElementById("video-view");
     var duratioElement = document.getElementById("video-duration");
-    var infosElement = document.getElementById("video-info");
     if (photoUrl === null)
-        document.getElementById('image-section').style.display = "none";
+        document.getElementById("image-section").style.display = "none";
     else
         imageCouverture.src = photoUrl;
     if (title === null)
@@ -229,15 +280,15 @@ function setVideoInfos(photoUrl, title, duration, nbreView, nbreLike) {
     else
         titleElement.innerText = title;
     if (nbreLike === null)
-        document.getElementById('like-section').style.display = "none";
+        document.getElementById("like-section").style.display = "none";
     else
         likeElement.innerText = "" + nbreLike;
     if (nbreView === null)
-        document.getElementById('view-section').style.display = "none";
+        document.getElementById("view-section").style.display = "none";
     else
         viewElement.innerText = "" + nbreView;
     if (duration === null)
-        document.getElementById('duration-section').style.display = "none";
+        document.getElementById("duration-section").style.display = "none";
     else
         duratioElement.innerText = duration;
     infosElement.style.display = "flex";
