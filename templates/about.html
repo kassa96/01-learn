@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<nav class="fixed z-50 top-0 px-8 py-2 left-0 right-0 bg-skin-primary"> 
+  <div class="bg-skin-primary flex justify-center w-full pt-3">
+      <div class="flex rounded-2xl justify-center items-center shadow overflow-hidden  p-2 gap-x-3">
+          <a href="/" class="link"  title="go Home" >
+      <div class="flex items-center gap-x-2 ">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
+        <span>Home</span>
+          
+      </div>
+    </a>
+    <a href="/tutorial?video_id=isY6_NYBEmE" class="link" title="go Home" >
+      <div class="flex items-center gap-x-2 ">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M440-320h80v-168l64 64 56-56-160-160-160 160 56 56 64-64v168Zm40 240q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+        <span>Example</span>
+      </div>
+    </a>
+    <a href="/about" id="watch-link" title="Watch tutorial" class="active-link">
+      <div class="flex items-center gap-x-2 ">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M478-240q21 0 35.5-14.5T528-290q0-21-14.5-35.5T478-340q-21 0-35.5 14.5T428-290q0 21 14.5 35.5T478-240Zm-36-154h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+        <span id="watch-label">About</span>
+          
+      </div>
+    </a>
+        </div>
+      </div>
+</nav>
+<main class="flex min-h-screen items-center flex-col p-8 md:p-24 gap-4">
+ <div class="mt-2xl sm:w-full md:w-1/2">
+ <div>
+<h1 class="text-2xl md:text-4xl text-center font-sans font-extrabold text-zinc-900">Who are we?</h1>
+ </div> 
+ <div>
+  <p class="py-4 text-xl font-bold text-zinc-700">
+    We aim to create a set of tools designed to help programming learners develop their coding skills through active practice.
+  </p>
+ </div>
+ <div>
+  <p class="text-pretty text-lg text-zinc-800">
+    Today, with the resources available online, it is possible to become a developer through a wide range of free or low-cost tutorials.<br> YouTube, for example, allows a community of enthusiasts to share their expertise through various content. However, many learners simply watch these videos without putting the acquired knowledge into practice.
+Mastering a skill primarily relies on consistent practice, in a cycle that I call <b>"doing by watching, trying, and asking"</b>.<br> This concept, inspired by ancestral practices, consists of:
+    <ul class="list-disc mx-6">
+      <li class="">
+        <b>Watching (Observation):</b>
+      Observing how experienced individuals accomplish a task helps to understand the techniques and methods employed.
+      </li>
+      <li>
+        <b>Trying (Practice): </b>
+        Putting the acquired skills into practice allows one to challenge themselves, add a personal touch, and deepen their thinking.
+      </li>
+      <li>
+        <b>Asking (Questioning):</b>
+        Asking questions helps to clarify doubts, solve obstacles, and better understand processes.
+      </li>
+    </ul>
+  </p>
+  <p class="text-pretty text-lg text-zinc-800 py-1">
+    Today, thanks to the Internet, acquiring knowledge is becoming increasingly accessible. We want to complement this with practice by providing a set of tools focused on hands-on experience, aimed at supporting learners in their journey.
+  </p>
+ </div>
+ <div>
+  <h1 class="text-xl md:text-2xl text-center font-sans font-extrabold text-zinc-900">The tools we are developing
+  </h1>
+ </div>
+ <div>
+  <p class="text-pretty text-lg text-zinc-800">
+    We aim to develop interactive tools to encourage active practice. 
+    Our first tool, <b>ExtractCode</b>, which we have developed, allows users to capture a specific area of a YouTube video,
+    extract the code presented, and test it directly in a code editor.<br>
+    With this artificial intelligence-based application, 
+    we aim to minimize the tendency to watch tutorials without testing the code. <br>
+    <b>ExtractCode</b> is a Minimum Viable Product (MVP) that we plan to continuously improve.<br>
+    We will also develop a Chrome extension to facilitate code extraction from YouTube. 
+    We rely on feedback from our users to refine ExtractCode and explore other features 
+    that will help learners go beyond simply watching tutorials.
+  </p>
+  <p>You can contact us at the address <span class="text-blue-700">kassadiallo@gmail.com</span></p>
+ </div>
+ </div>
+</main>
+{% endblock %}

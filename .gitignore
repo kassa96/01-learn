@@ -1,5 +1,5 @@
-backend/__pycache__
-backend/node_modules/
-backend/static/videos/*
+__pycache__
+/node_modules/
+/static/videos/*
 venv/
 .env

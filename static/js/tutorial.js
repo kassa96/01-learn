@@ -58,8 +58,15 @@ var rectangle = null;
 var showRectangle = false;
 var is_scanning = false;
 var scanning_success = false;
+var lastCaptureScan = "";
+var lastCodeScan = "";
+var lastCodeTitle = "";
 window.addEventListener("resize", repositionCanvas);
 if (video !== null) {
+    video.addEventListener('loadedmetadata', function () {
+        video.play();
+        console.log("okkkkk");
+    });
     canvas.addEventListener("mousedown", function (e) { return rectangle.mouseDown(e); });
     canvas.addEventListener("mousemove", function (e) { return rectangle.mouseMove(e); });
     canvas.addEventListener("mouseup", function () { return rectangle.mouseUp(); });
@@ -109,6 +116,11 @@ askLink.addEventListener("click", function (e) {
     showRectangle = false;
     if (!video.paused) {
         video.pause();
+    }
+    if (lastCaptureScan != "" && lastCodeScan != "") {
+        codeImage.src = lastCaptureScan;
+        codeText.textContent = lastCodeScan;
+        langageName.textContent = lastCodeTitle;
     }
 });
 copyLink.addEventListener("click", function () {
@@ -342,9 +354,12 @@ function processCapture() {
                     }
                     langage_name = getLanguageName(rawCode);
                     langageName.innerText = langage_name;
+                    lastCodeTitle = langage_name;
+                    lastCaptureScan = base64Data;
                     formatedCode = getCode(rawCode);
                     divError.style.display = "none";
                     codeText.textContent = formatedCode;
+                    lastCodeScan = formatedCode;
                     codeSection.style.display = "flex";
                     divError.style.display = "none";
                     scanningIndicator.style.display = "none";

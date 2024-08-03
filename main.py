@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from PIL import Image
 from io import BytesIO
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import RedirectResponse
@@ -17,7 +18,9 @@ from youtube_utils import *
 from chatbot import extractCode
 
 load_dotenv()
+DAYS_THRESHOLD = 1 
 app=FastAPI()
+
 app.mount("/static",StaticFiles(directory="static"),name="static")
 templates=Jinja2Templates(directory="templates")
 output_dir = 'static/videos/'
@@ -27,6 +30,13 @@ async def index(request:Request):
     return templates.TemplateResponse(
         request=request, name="home.html"
     )
+
+@app.get("/about")
+async def index(request:Request):
+    return templates.TemplateResponse(
+        request=request, name="about.html"
+    )
+
 
 @app.get("/tutorial")
 async def index(request:Request,video_id:str):
@@ -47,6 +57,7 @@ def validateTutorial(video_url: str):
     api_key = os.getenv('YOUTUBE_API_KEY')
     video_details = {}
     video_details, error = get_video_details_from_api(api_key, video_url)
+    error_pytube = None
     if error is not None:
         print("error from api:", error)
         video_details, error_pytube = get_video_details(video_url)
@@ -80,6 +91,7 @@ async def websocket_download_video(websocket: WebSocket):
                 return 
             await websocket.send_json( {"status":"success", "type": "starting_download"})
             asyncio.create_task(download_video(url,output_dir, websocket))
+            #asyncio.create_task(delete_old_files())
     except WebSocketDisconnect:
         pass
 
@@ -123,9 +135,30 @@ async def scan_image(image_data: ImageData):
         decoded_image = base64.b64decode(encoded_data)
         image = Image.open(BytesIO(decoded_image))
         code = extractCode(image)
-        print("code:", code)
+       # print("code:", code)
         return {"code": code}
     
     except Exception as e:
         print("error--:", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.exception_handler(HTTPException)
+async def not_found_exception_handler(request, exc):
+    if exc.status_code == 404:
+        return RedirectResponse(url="/")
+    return exc
+
+
+def delete_old_files():
+    threshold = time.time() - (DAYS_THRESHOLD * 86400)
+    directory_path = Path(output_dir)
+
+    if not directory_path.is_dir():
+        print(f"The directory {output_dir} does not exist.")
+        return
+    
+    for file_path in directory_path.iterdir():
+        if file_path.is_file() and file_path.stat().st_mtime < threshold:
+            os.remove(file_path)
+            print(f"Deleted {file_path}")

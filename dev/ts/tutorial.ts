@@ -30,10 +30,17 @@ let rectangle: Rectangle | null = null;
 let showRectangle = false;
 let is_scanning = false;
 let scanning_success = false;
+let lastCaptureScan = ""
+let lastCodeScan = ""
+let lastCodeTitle = ""
 
 window.addEventListener("resize", repositionCanvas);
 
 if (video !== null) {
+  video.addEventListener('loadedmetadata', () => {
+    video.play()
+    console.log("okkkkk")
+  })
   canvas.addEventListener("mousedown", (e) => rectangle!.mouseDown(e));
   canvas.addEventListener("mousemove", (e) => rectangle!.mouseMove(e));
   canvas.addEventListener("mouseup", () => rectangle!.mouseUp());
@@ -87,6 +94,11 @@ askLink.addEventListener("click", (e) => {
   showRectangle = false;
   if (!video.paused) {
     video.pause();
+  }
+  if (lastCaptureScan != "" && lastCodeScan != ""){
+    codeImage.src = lastCaptureScan
+    codeText.textContent = lastCodeScan
+    langageName.textContent = lastCodeTitle
   }
 });
 
@@ -305,9 +317,12 @@ async function processCapture() {
       }
       let langage_name = getLanguageName(rawCode);
       langageName.innerText = langage_name;
+      lastCodeTitle = langage_name
+      lastCaptureScan = base64Data
       let formatedCode = getCode(rawCode);
       divError.style.display = "none";
       codeText.textContent = formatedCode;
+      lastCodeScan = formatedCode as string
       codeSection.style.display = "flex";
       divError.style.display = "none";
       scanningIndicator.style.display = "none";
