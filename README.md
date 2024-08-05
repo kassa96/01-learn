@@ -19,3 +19,9 @@ To launch the application, run the following commands:
 cd 01-learn/
 fastapi run main.py
 ```
+To make changes to the source code, the complete code can be found in the dev-app branch ```git switch dev-app```\. If the changes are related to CSS, install Tailwind. If they are related to the frontend, install Node and TypeScript. To run the program in watch mode, open three terminals and execute the following commands in each 
+```
+npm run watch:css
+tsc -w
+fastapi run main.py
+```
