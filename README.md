@@ -17,7 +17,8 @@ GEMINI_API_KEY = AIzaSyBLZUvBPoyKO2ppuF2FqbO_nF9vSfByymI
 To launch the application, run the following commands:
 ```
 cd 01-learn/
-source venv/bin/activate 
+source venv/bin/activate
+pip install -r requirements.txt
 fastapi run main.py
 ```
 # Contribution
