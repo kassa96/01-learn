@@ -91,7 +91,6 @@ async def websocket_download_video(websocket: WebSocket):
                 return 
             await websocket.send_json( {"status":"success", "type": "starting_download"})
             asyncio.create_task(download_video(url,output_dir, websocket))
-            #asyncio.create_task(delete_old_files())
     except WebSocketDisconnect:
         pass
 
@@ -135,7 +134,6 @@ async def scan_image(image_data: ImageData):
         decoded_image = base64.b64decode(encoded_data)
         image = Image.open(BytesIO(decoded_image))
         code = extractCode(image)
-       # print("code:", code)
         return {"code": code}
     
     except Exception as e:
@@ -148,17 +146,3 @@ async def not_found_exception_handler(request, exc):
     if exc.status_code == 404:
         return RedirectResponse(url="/")
     return exc
-
-
-def delete_old_files():
-    threshold = time.time() - (DAYS_THRESHOLD * 86400)
-    directory_path = Path(output_dir)
-
-    if not directory_path.is_dir():
-        print(f"The directory {output_dir} does not exist.")
-        return
-    
-    for file_path in directory_path.iterdir():
-        if file_path.is_file() and file_path.stat().st_mtime < threshold:
-            os.remove(file_path)
-            print(f"Deleted {file_path}")

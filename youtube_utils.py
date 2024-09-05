@@ -11,7 +11,6 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import uuid
 import time
-import cv2
 
 def get_video_transcript(video_id, language_code):
     transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
@@ -190,34 +189,4 @@ def convert_iso_duration(duration):
                 seconds = int(value)
 
     return "{:02}:{:02}:{:02}".format(hours, minutes, seconds)
-
-def capture_frame(video_path, output_dir, frame_time, image_width, image_height, rect_x, rect_y, rect_width, rect_height)-> str:
-    cap = cv2.VideoCapture(video_path)
-    
-    if not cap.isOpened():
-        print("Error: Impossible to read the video.")
-        return ""
-    
-    cap.set(cv2.CAP_PROP_POS_MSEC, frame_time * 1000)
-    ret, frame = cap.read()
-    
-    if ret:
-        frame = cv2.resize(frame, (image_width, image_height))        
-        cropped_frame = frame[rect_y:rect_y+rect_height, rect_x:rect_x+rect_width]        
-        timestamp = int(time.time() * 1000)
-        random_str = str(uuid.uuid4().hex[:4])
-        filename = f"image_{timestamp}_{random_str}.png"        
-        output_path = os.path.join(output_dir, filename)        
-        cv2.imwrite(output_path, cropped_frame)
-        cap.release()
-        cv2.destroyAllWindows()
-        return output_path
-    else:
-        print("Error: Impossible to capture image from video.")
-        cap.release()
-        cv2.destroyAllWindows()
-        return ""    
-    
-
-
 

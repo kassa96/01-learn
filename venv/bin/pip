@@ -1,4 +1,4 @@
-#!/home/kassadiallo/01-learn/venv/bin/python3
+#!/home/kassadiallo/opt/01-learn/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

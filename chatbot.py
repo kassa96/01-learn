@@ -21,15 +21,14 @@ def extractCode(img) -> str:
       prompt = """"
           You must carefully examine the image provided by the user.
 Your task is to meticulously scan the image to extract any code it contains.
-Provide the programming language corresponding to the extracted code in the following format: '<lg__code>[name of language found]</lg__code><txt__code>[extracted code]</txt__code>'.
-If you do not recognize the language of the extracted code, respond in this manner: '<lg__code>unknown</lg__code> <txt__code>[extracted code]</txt__code>'.
+Provide the programming language corresponding to the extracted code in the following format: 
+'<lg__code>[name of language found]</lg__code><txt__code>[extracted code]</txt__code>'.
+If you do not recognize the language of the extracted code, respond in this manner: 
+'<lg__code>unknown</lg__code> <txt__code>[extracted code]</txt__code>'.
 If you find no code in the image, respond with '<no__code/>'.
            """
       response = model.generate_content([prompt, img], request_options={"retry": retry.Retry(predicate=retry.if_transient_error)})
-      #print("meta data:", response.usage_metadata)
       markdown_output = to_markdown(response.text)
-      #print("generated text:", response.text)
-      #print("generated text markdown:", markdown_output.data)
       return  markdown_output.data
   except exceptions.ServiceUnavailable as e:
         print(f"Error: {e}")
