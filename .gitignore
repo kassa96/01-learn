@@ -1,5 +1,4 @@
 __pycache__
-node_modules/
+node_modules/*
 static/videos/*
-venv/
-.env
+venv/*
