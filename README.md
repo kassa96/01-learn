@@ -10,8 +10,8 @@ For extracting code from an image, we use the Gemini API.
 Please log in to the Google Cloud Console to generate your API keys.\
 To test the application, you can use the API keys provided in the `.env` file.
 ```
-YOUTUBE_API_KEY=AIzaSyDLA5AJZ-T-0Z5lau6KhfNPX48XeJVBYQQ
-GEMINI_API_KEY = AIzaSyBLZUvBPoyKO2ppuF2FqbO_nF9vSfByymI
+YOUTUBE_API_KEY= XXX
+GEMINI_API_KEY = XXX
 ```
 # Excecution
 To launch the application, run the following commands:
